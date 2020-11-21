@@ -8,6 +8,10 @@ module.exports = {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
       },
+      value: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+      },
       TweetId: {
         type: Sequelize.UUID,
         allowNull: false,

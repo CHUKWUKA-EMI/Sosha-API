@@ -15,6 +15,14 @@ const Follow = sequelize.define(
       type: DataTypes.UUID,
       allowNull: false,
     },
+    targetId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
+    value: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   },
   {}
 );

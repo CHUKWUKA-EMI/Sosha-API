@@ -11,12 +11,22 @@ const User = sequelize.define(
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
     },
-    name: {
+    firstName: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
         min: {
-          msg: "name cannot be less than thhree characters",
+          msg: "name cannot be less than three characters",
+          args: [3],
+        },
+      },
+    },
+    lastName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        min: {
+          msg: "name cannot be less than three characters",
           args: [3],
         },
       },
@@ -50,7 +60,31 @@ const User = sequelize.define(
         isDate: true,
       },
     },
-    image: {
+    imgUrl: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    headline: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    bio: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    country: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    state: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    website: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    sex: {
       type: DataTypes.STRING,
       allowNull: true,
     },

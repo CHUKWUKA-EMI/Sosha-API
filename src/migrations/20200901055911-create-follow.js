@@ -12,6 +12,14 @@ module.exports = {
         type: Sequelize.UUID,
         allowNull: false,
       },
+      targetId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+      },
+      value: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+      },
       createdAt: {
         type: Sequelize.DATE,
       },

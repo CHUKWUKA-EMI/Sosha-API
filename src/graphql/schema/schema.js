@@ -1,12 +1,22 @@
 const typeDefs = `
      type User{
        id:ID!
-       name:String!
+       firstName:String!
+       lastName:String!
        email: String!
        phone:String!
-       Tweets:Tweet!
+       Tweets:[Tweet!]
+       comments:[Comment!]
+       likes:[Like!]
+       chats:[Chat!]
        createdAt: Date!
        birthdate: Date
+       headline:String!
+       bio:String!
+       country:String!
+       state:String!
+       website:String!
+       sex:String!
      }
      scalar Date
 
@@ -18,17 +28,17 @@ const typeDefs = `
      type Tweet{
          id: ID!
          content: String!
+         imgUrl:String!
          User:User!
-         Comments: Comment!
+         Comments: [Comment!]
+         Likes:[Like!]
          createdAt: Date!
          updatedAt: Date!
      }
      type Chat{
        id: ID!
-       user:User!
-       username: String!
+       UserId:ID!
        receiverId: ID!
-       receiverName: String!
        message: String!
        createdAt: Date!
      }
@@ -41,47 +51,50 @@ const typeDefs = `
      }
      type Like{
        id: ID!
-       tweet: Tweet!
-       user: User!
+       UserId:ID!
+       value:Boolean!
        createdAt: Date!
      }
      type Follow{
        id: ID!
+       targetId:ID!
+       value:Boolean!
        user: User!
      }
 
      type Query{
        user:User!
-       retrieveUser(email:String, phone:String, username:String): User
-       tweets:Tweet!
-       comments: Comment!
-       likes:[Like]
-       follows:[Follow]
-       chats:[Chat]
+       retrieveUser(email:String, phone:String, username:String): User!
+       tweets:[Tweet!]
+       comments: [Comment!]
+       likes:[Like!]
+       follows:[Follow!]
+       chats:[Chat!]
 
      }
 
      type Mutation{
-       createUser(name:String!, email: String!,password:String!, phone: String!, birthdate:Date):User!
+       createUser(firstName:String!,lastName:String!, email: String!,password:String!, phone: String!, birthdate:Date):User!
        login(email:String!, password: String!): AuthData!
+       updateProfile(firstName:String,lastName:String, email: String, phone: String,imgUrl:String, birthdate:Date,headline:String,bio:String,country:String,state:String,website:String,sex:String):User!
        resetPassword(password:String!):AuthData!
-       createTweet(UserId: ID!,content: String!):  Tweet!
-       updateTweet(id: ID!, content: String!): Tweet!
+       createTweet(content: String!,imgUrl:String):  Tweet!
+       updateTweet(id: ID!, content: String,imgUrl:String): Tweet!
        deleteTweet(id:ID!):String!
-       createComment(TweetId:ID!,UserId:ID!,comment: String):Comment!
+       createComment(TweetId:ID!,comment: String):Comment!
        deleteComment(id:ID!):String!
-       like(TweetId:ID!, UserId: ID!):Like!
-       follow(UserId: ID!): Follow!
-       createChat(UserId: ID!, username:String!, receiverId:ID!, message:String!,createdAt:Date!): Chat!
-       userTyping(UserId:ID!, receiverId: ID!): Boolean!
+       like(TweetId:ID!):Like!
+       follow(targetId:ID!): Follow!
+       createChat(username:String, receiverId:ID!, message:String!): Chat!
+       userTyping(receiverId: ID!): Boolean!
      }
 
      type Subscription{
-       newTweet: Tweet
-       newComment: Comment
-       newLike: Like
-       newFollow: Follow
-       newChat(receiverId: ID!): Chat
+       newTweet: Tweet!
+       newComment: Comment!
+       newLike: Like!
+       newFollow: Follow!
+       newChat(receiverId: ID!): Chat!
        userTyping(receiverId: ID!):String!
      }
 `;

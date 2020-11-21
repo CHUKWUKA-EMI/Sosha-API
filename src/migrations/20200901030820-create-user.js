@@ -8,12 +8,22 @@ module.exports = {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
       },
-      name: {
+      firstName: {
         type: Sequelize.STRING,
         allowNull: false,
         validate: {
           min: {
-            msg: "name cannot be less than thhree characters",
+            msg: "name cannot be less than three characters",
+            args: [3],
+          },
+        },
+      },
+      lastName: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        validate: {
+          min: {
+            msg: "name cannot be less than three characters",
             args: [3],
           },
         },
@@ -47,7 +57,31 @@ module.exports = {
           isDate: true,
         },
       },
-      image: {
+      imgUrl: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      headline: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      bio: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      country: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      state: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      website: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      sex: {
         type: Sequelize.STRING,
         allowNull: true,
       },

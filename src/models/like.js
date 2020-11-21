@@ -11,6 +11,10 @@ const Like = sequelize.define(
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
     },
+    value: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     TweetId: {
       type: DataTypes.UUID,
       allowNull: false,

@@ -11,7 +11,10 @@ module.exports = {
           defaultValue: Sequelize.UUIDV4,
         },
         content: {
-          type: Sequelize.STRING,
+          type: Sequelize.TEXT,
+        },
+        imgUrl: {
+          type: Sequelize.TEXT,
         },
         UserId: {
           type: Sequelize.UUID,

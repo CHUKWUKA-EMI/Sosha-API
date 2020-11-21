@@ -13,15 +13,34 @@ module.exports = {
           {
             model: models.Tweet,
             required: false,
-            include: [{ model: models.Comment, required: false }],
+            include: [
+              { model: models.Comment, required: false },
+              {
+                model: models.Like,
+                required: true,
+                nested: true,
+              },
+            ],
+          },
+          {
+            model: models.Comment,
+            required: false,
+          },
+          {
+            model: models.Like,
+            required: false,
+          },
+          {
+            model: models.Chat,
+            required: false,
           },
         ],
-        raw: true,
+
         nest: true,
         subQuery: true,
       });
-
-      return { ...user };
+      console.log("user", user);
+      return user;
     } catch (error) {
       return error.message;
     }
@@ -56,14 +75,13 @@ module.exports = {
   tweets: async (_, args, context) => {
     const id = authenticateUser(context);
     try {
-      const tweet = await models.Tweet.findOne({
+      const tweet = await models.Tweet.findAll({
         where: { UserId: id },
         include: [
           { model: models.Comment, required: false },
           { model: models.User, required: false },
         ],
         nest: true,
-        raw: true,
       });
       return tweet;
     } catch (error) {
@@ -73,18 +91,48 @@ module.exports = {
   comments: async (_, args, context) => {
     const id = authenticateUser(context);
     try {
-      const comment = await models.Comment.findOne({
+      const comment = await models.Comment.findAll({
         where: { UserId: id },
         include: [
           { model: models.User, required: false },
           { model: models.Tweet, required: false },
         ],
-        raw: true,
+
         nest: true,
       });
       return comment;
     } catch (error) {
       return error.message;
+    }
+  },
+  likes: async (_, args, context) => {
+    const userId = authenticateUser(context);
+    if (!userId) {
+      return new Error("user not authenticated");
+    }
+
+    try {
+      const likes = await models.Like.findAll({
+        where: { UserId: userId },
+      });
+      if (likes) {
+        return likes;
+      }
+      return "No likes found";
+    } catch (error) {
+      return error;
+    }
+  },
+  chats: async (_, args, context) => {
+    const userId = authenticateUser(context);
+    if (!userId) {
+      return new Error("user not authenticated");
+    }
+    try {
+      const chats = await models.Chat.findAll({ where: { UserId: userId } });
+      return chats;
+    } catch (error) {
+      return error;
     }
   },
 };

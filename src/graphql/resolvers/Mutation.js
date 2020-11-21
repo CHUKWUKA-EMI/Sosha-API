@@ -2,11 +2,12 @@ const models = require("../../DB/database");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { authenticateUser } = require("../../middleware/Authentication");
+const { response } = require("express");
 require("dotenv").config();
 
 module.exports = {
   createUser: async (root, args) => {
-    const { name, email, password, phone, birthdate } = args;
+    const { firstName, lastName, email, password, phone, birthdate } = args;
     try {
       const existingUser = await models.User.findOne({
         where: { email: email },
@@ -16,7 +17,8 @@ module.exports = {
       }
       const hashedPswd = await bcrypt.hash(password, 10);
       const user = await models.User.create({
-        name: name,
+        firstName: firstName,
+        lastName: lastName,
         email: email,
         password: hashedPswd,
         phone: phone,
@@ -52,12 +54,31 @@ module.exports = {
       console.error(error.message);
     }
   },
-  createTweet: async (root, { UserId, content }, context) => {
-    UserId = authenticateUser(context);
+  updateProfile: async (root, args, context) => {
+    const userId = authenticateUser(context);
+    if (!userId) {
+      return new Error("user not authenticated");
+    }
     try {
+      const user = await models.User.findOne({ where: { id: userId } });
+      if (!user) {
+        return new Error("user not found");
+      }
+      const updatedUser = await user.update({ args });
+      return updatedUser;
+    } catch (error) {
+      return error;
+    }
+  },
+  createTweet: async (root, { content, imgUrl }, context) => {
+    const UserId = authenticateUser(context);
+
+    try {
+      console.log(UserId);
       const tweet = await models.Tweet.create({
         UserId: UserId,
         content: content,
+        imgUrl,
       });
       return tweet;
     } catch (error) {
@@ -65,12 +86,12 @@ module.exports = {
     }
   },
 
-  updateTweet: async (root, { id, content }, context) => {
+  updateTweet: async (root, { id, content, imgUrl }, context) => {
     authenticateUser(context);
     try {
       const tweet = await models.Tweet.findOne({ where: { id: id } });
       if (tweet) {
-        const updatedTweet = await tweet.update({ content: content });
+        const updatedTweet = await tweet.update({ content: content, imgUrl });
         return updatedTweet;
       }
       return new Error("Tweet not found");
@@ -92,8 +113,8 @@ module.exports = {
       return error.message;
     }
   },
-  createComment: async (root, { TweetId, UserId, comment }, context) => {
-    UserId = authenticateUser(context);
+  createComment: async (root, { TweetId, comment }, context) => {
+    const UserId = authenticateUser(context);
     try {
       const tweet = await models.Tweet.findOne({ where: { id: TweetId } });
       if (!tweet) {
@@ -119,6 +140,92 @@ module.exports = {
       throw new Error("Comment cannot be deleted");
     } catch (error) {
       return error.message;
+    }
+  },
+  like: async (root, { TweetId }, context) => {
+    const UserId = authenticateUser(context);
+    if (!UserId) {
+      return new Error("User not Authenticated");
+    }
+    try {
+      const tweet = await models.Tweet.findOne({ where: { id: TweetId } });
+      if (!tweet) {
+        return new Error("Tweet not found");
+      }
+
+      const userLikes = await models.Like.findOne({ where: { TweetId } });
+      if (userLikes) {
+        const value = userLikes.value === true ? false : true;
+        const yourLike = await userLikes.update({ value });
+        return yourLike;
+      } else {
+        const newLike = await models.Like.create({
+          value: true,
+          TweetId: TweetId,
+          UserId: UserId,
+        });
+        return newLike;
+      }
+    } catch (error) {
+      console.log("error", error);
+      return error;
+    }
+  },
+  follow: async (root, { targetId }, context) => {
+    const UserId = authenticateUser(context);
+    if (!UserId) {
+      return new Error("User not Authenticated");
+    }
+    try {
+      const user = await models.User.findOne({ where: { id: targetId } });
+      if (!user) {
+        return new Error("User not found");
+      }
+
+      const userFollow = await models.Follow.findOne({ where: { targetId } });
+      if (userFollow) {
+        const value = userFollow.value === true ? false : true;
+        const yourFollow = await userFollow.update({ value });
+        return yourFollow;
+      } else {
+        console.log("model", models.Follow);
+        const newFollow = await models.Follow.create({
+          UserId: UserId,
+          targetId: targetId,
+          value: true,
+        });
+        return newFollow;
+      }
+    } catch (error) {
+      return error;
+    }
+  },
+  createChat: async (root, { receiverId, message }, context) => {
+    const UserId = authenticateUser(context);
+    if (!UserId) {
+      return new Error("user not authenticated");
+    }
+    console.log("response", response);
+    try {
+      const chat = await models.Chat.create({
+        UserId: UserId,
+        receiverId: receiverId,
+        message: message,
+      });
+      return chat;
+    } catch (error) {
+      return error;
+    }
+  },
+  userTyping: async (root, { receiverId }, context) => {
+    const UserId = authenticateUser(context);
+    if (!UserId) {
+      return new Error("user not authenticated");
+    }
+    try {
+      return true;
+    } catch (error) {
+      return error;
     }
   },
 };
