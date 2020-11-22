@@ -15,7 +15,7 @@ const Follow = sequelize.define(
       type: DataTypes.UUID,
       allowNull: false,
     },
-    targetId: {
+    targetid: {
       type: DataTypes.UUID,
       allowNull: false,
     },

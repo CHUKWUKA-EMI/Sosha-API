@@ -57,7 +57,7 @@ const typeDefs = `
      }
      type Follow{
        id: ID!
-       targetId:ID!
+       targetid:ID!
        value:Boolean!
        user: User!
      }
@@ -84,16 +84,16 @@ const typeDefs = `
        createComment(TweetId:ID!,comment: String):Comment!
        deleteComment(id:ID!):String!
        like(TweetId:ID!):Like!
-       follow(targetId:ID!): Follow!
+       follow(targetid:ID!): Follow!
        createChat(username:String, receiverId:ID!, message:String!): Chat!
        userTyping(receiverId: ID!): Boolean!
      }
 
      type Subscription{
        newTweet: Tweet!
-       newComment: Comment!
-       newLike: Like!
-       newFollow: Follow!
+       newComment(TweetId:ID!): Comment!
+       newLike(TweetId:ID!): Like!
+       newFollow(targetid:ID!): Follow!
        newChat(receiverId: ID!): Chat!
        userTyping(receiverId: ID!):String!
      }

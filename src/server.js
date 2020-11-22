@@ -4,13 +4,13 @@ const bodyparser = require("body-parser");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
+const jwt = require("jsonwebtoken");
 const sequelize = require("./DB/connection");
 const models = require("./DB/database");
 const typeDefs = require("./graphql/schema/schema");
 const rootResolver = require("./graphql/resolvers/index");
 
 dotenv.config();
-
 const pubsub = new PubSub();
 
 const Server = new GraphQLServer({
@@ -22,6 +22,24 @@ const Server = new GraphQLServer({
       pubsub,
     };
   },
+});
+
+Server.get("/activate/:token", async (req, res, next) => {
+  const { token } = req.params;
+  try {
+    const { id } = jwt.verify(token, process.env.JWT_SECRET);
+    if (id) {
+      const user = await models.User.findOne({ where: { id } });
+      if (user) {
+        await user.update({ activated: true });
+        return res.redirect(`${FRONTEND_URL}/login`);
+      }
+      return res.send(`User with ID ${id} not found`);
+    }
+    return res.send("Invalid token");
+  } catch (error) {
+    next(error);
+  }
 });
 
 if (process.env.NODE_ENV === "development") {

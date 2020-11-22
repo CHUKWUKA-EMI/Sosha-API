@@ -7,6 +7,8 @@ const Comment = require("../models/comment");
 const Like = require("../models/like");
 const Follow = require("../models/follow");
 const Chat = require("../models/chat");
+const Acivate = require("../models/activationTokens");
+const ResetPassword = require("../models/password-reset");
 
 //User relations
 User.hasMany(Tweet, {
@@ -85,5 +87,7 @@ models.Comment = Comment;
 models.Like = Like;
 models.Follow = Follow;
 models.Chat = Chat;
+models.Acivate = Acivate;
+models.ResetPassword = ResetPassword;
 
 module.exports = models;

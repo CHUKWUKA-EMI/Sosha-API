@@ -1,34 +1,30 @@
 "use strict";
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable("Follow", {
+    return queryInterface.createTable("password-resets", {
       id: {
         allowNull: false,
+        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
+        type: Sequelize.INTEGER,
       },
-      UserId: {
+      userId: {
         type: Sequelize.UUID,
-        allowNull: false,
       },
-      targetid: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      value: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
+      token: {
+        type: Sequelize.STRING,
       },
       createdAt: {
+        allowNull: false,
         type: Sequelize.DATE,
       },
       updatedAt: {
+        allowNull: false,
         type: Sequelize.DATE,
       },
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable("Follows");
+    return queryInterface.dropTable("password-resets");
   },
 };

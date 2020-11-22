@@ -2,9 +2,12 @@ const models = require("../../DB/database");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { authenticateUser } = require("../../middleware/Authentication");
-const { response } = require("express");
+const { PubSub } = require("graphql-yoga");
+const { sendEmail } = require("../../services/email");
+const emailTemplate = require("../../emailTemplate/template");
 require("dotenv").config();
 
+const pubsub = new PubSub();
 module.exports = {
   createUser: async (root, args) => {
     const { firstName, lastName, email, password, phone, birthdate } = args;
@@ -15,6 +18,7 @@ module.exports = {
       if (existingUser) {
         throw new Error("User already exists");
       }
+
       const hashedPswd = await bcrypt.hash(password, 10);
       const user = await models.User.create({
         firstName: firstName,
@@ -24,9 +28,16 @@ module.exports = {
         phone: phone,
         birthdate: new Date(birthdate).toUTCString(),
       });
+      const message = emailTemplate(user);
+      await sendEmail(
+        `Developer-Justice <pistischaris494@gmail.com>`,
+        email,
+        "Email Confirmation",
+        message
+      );
       return user;
     } catch (error) {
-      console.error(error.message);
+      return error;
     }
   },
 
@@ -80,9 +91,11 @@ module.exports = {
         content: content,
         imgUrl,
       });
+      context.pubsub.publish("newTweet", { newTweet: tweet });
+      console.log("tweet", tweet);
       return tweet;
     } catch (error) {
-      return error.message;
+      return error;
     }
   },
 
@@ -125,6 +138,10 @@ module.exports = {
         comment: comment,
         UserId: UserId,
       });
+      context.pubsub.publish("newComment", {
+        newComment: commented,
+        TweetId,
+      });
       return commented;
     } catch (error) {
       return new Error(error.message);
@@ -164,6 +181,7 @@ module.exports = {
           TweetId: TweetId,
           UserId: UserId,
         });
+        context.pubsub.publish("newLike", { newLike: newLike, TweetId });
         return newLike;
       }
     } catch (error) {
@@ -171,29 +189,29 @@ module.exports = {
       return error;
     }
   },
-  follow: async (root, { targetId }, context) => {
+  follow: async (root, { targetid }, context) => {
     const UserId = authenticateUser(context);
     if (!UserId) {
       return new Error("User not Authenticated");
     }
     try {
-      const user = await models.User.findOne({ where: { id: targetId } });
+      const user = await models.User.findOne({ where: { id: targetid } });
       if (!user) {
         return new Error("User not found");
       }
 
-      const userFollow = await models.Follow.findOne({ where: { targetId } });
+      const userFollow = await models.Follow.findOne({ where: { targetid } });
       if (userFollow) {
         const value = userFollow.value === true ? false : true;
         const yourFollow = await userFollow.update({ value });
         return yourFollow;
       } else {
-        console.log("model", models.Follow);
         const newFollow = await models.Follow.create({
           UserId: UserId,
-          targetId: targetId,
+          targetid: targetid,
           value: true,
         });
+        context.pubsub.publish("newFollow", { newFollow: newFollow, targetid });
         return newFollow;
       }
     } catch (error) {
@@ -205,13 +223,14 @@ module.exports = {
     if (!UserId) {
       return new Error("user not authenticated");
     }
-    console.log("response", response);
+
     try {
       const chat = await models.Chat.create({
         UserId: UserId,
         receiverId: receiverId,
         message: message,
       });
+      context.pubsub.publish("newChat", { newChat: chat, receiverId });
       return chat;
     } catch (error) {
       return error;
@@ -223,6 +242,10 @@ module.exports = {
       return new Error("user not authenticated");
     }
     try {
+      context.pubsub.publish("userTyping", {
+        userTyping: true,
+        receiverId,
+      });
       return true;
     } catch (error) {
       return error;

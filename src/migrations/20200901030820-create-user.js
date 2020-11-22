@@ -46,23 +46,12 @@ module.exports = {
           isEmail: true,
         },
       },
-      phone: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      birthdate: {
-        type: Sequelize.DATE,
-        allowNull: true,
-        validate: {
-          isDate: true,
-        },
-      },
-      imgUrl: {
-        type: Sequelize.TEXT,
-        allowNull: true,
+      activated: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
       },
       headline: {
-        type: Sequelize.TEXT,
+        type: Sequelize.STRING,
         allowNull: true,
       },
       bio: {
@@ -85,6 +74,22 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      phone: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      birthdate: {
+        type: Sequelize.DATE,
+        allowNull: true,
+        validate: {
+          isDate: true,
+        },
+      },
+      imgUrl: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+
       createdAt: {
         type: Sequelize.DATE,
       },
