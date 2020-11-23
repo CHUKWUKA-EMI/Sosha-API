@@ -32,7 +32,7 @@ Server.get("/activate/:token", async (req, res, next) => {
       const user = await models.User.findOne({ where: { id } });
       if (user) {
         await user.update({ activated: true });
-        return res.redirect(`${FRONTEND_URL}/login`);
+        return res.redirect(`${process.env.FRONTEND_URL}/login`);
       }
       return res.send(`User with ID ${id} not found`);
     }
