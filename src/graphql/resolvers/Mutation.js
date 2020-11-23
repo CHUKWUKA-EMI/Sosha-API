@@ -51,6 +51,10 @@ module.exports = {
       if (!validPswd) {
         throw new Error("Invalid password");
       }
+      const isActivated = user.activated;
+      if (!isActivated) {
+        return new Error("Account not verified");
+      }
       const { JWT_SECRET, JWT_EXPIRESIN } = process.env;
 
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
