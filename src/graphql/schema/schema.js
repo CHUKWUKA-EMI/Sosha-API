@@ -10,13 +10,14 @@ const typeDefs = `
        likes:[Like!]
        chats:[Chat!]
        createdAt: Date!
+       imgUrl:String
        birthdate: Date
-       headline:String!
-       bio:String!
-       country:String!
-       state:String!
-       website:String!
-       sex:String!
+       headline:String
+       bio:String
+       country:String
+       state:String
+       website:String
+       sex:String
      }
      scalar Date
 
