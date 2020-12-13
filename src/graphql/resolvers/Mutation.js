@@ -79,7 +79,8 @@ module.exports = {
       if (!user) {
         return new Error("user not found");
       }
-      const updatedUser = await user.update({ args });
+      const updatedUser = await user.update(args);
+      console.log("update args", args);
       return updatedUser;
     } catch (error) {
       return error;

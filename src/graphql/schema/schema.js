@@ -77,7 +77,7 @@ const typeDefs = `
      type Mutation{
        createUser(firstName:String!,lastName:String!, email: String!,password:String!, phone: String!, birthdate:Date):User!
        login(email:String!, password: String!): AuthData!
-       updateProfile(firstName:String,lastName:String, email: String, phone: String,imgUrl:String, birthdate:Date,headline:String,bio:String,country:String,state:String,website:String,sex:String):User!
+       updateProfile(id:ID!,firstName:String,lastName:String, email: String, phone: String,imgUrl:String, birthdate:Date,headline:String,bio:String,country:String,state:String,website:String,sex:String):User!
        resetPassword(password:String!):AuthData!
        createTweet(content: String!,imgUrl:String):  Tweet!
        updateTweet(id: ID!, content: String,imgUrl:String): Tweet!
