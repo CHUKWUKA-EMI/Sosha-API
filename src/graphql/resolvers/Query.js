@@ -73,13 +73,14 @@ module.exports = {
     }
   },
   tweets: async (_, args, context) => {
-    const id = authenticateUser(context);
+    authenticateUser(context);
     try {
       const tweet = await models.Tweet.findAll({
-        where: { UserId: id },
+        // where: { UserId: id },
         include: [
           { model: models.Comment, required: false },
           { model: models.User, required: false },
+          { model: models.Like, required: false },
         ],
         nest: true,
       });

@@ -28,8 +28,8 @@ const typeDefs = `
      }
      type Tweet{
          id: ID!
-         content: String!
-         imgUrl:String!
+         content: String
+         imgUrl:String
          User:User!
          Comments: [Comment!]
          Likes:[Like!]
@@ -79,7 +79,7 @@ const typeDefs = `
        login(email:String!, password: String!): AuthData!
        updateProfile(id:ID!,firstName:String,lastName:String, email: String, phone: String,imgUrl:String, birthdate:Date,headline:String,bio:String,country:String,state:String,website:String,sex:String):User!
        resetPassword(password:String!):AuthData!
-       createTweet(content: String!,imgUrl:String):  Tweet!
+       createTweet(content: String,imgUrl:String):  Tweet!
        updateTweet(id: ID!, content: String,imgUrl:String): Tweet!
        deleteTweet(id:ID!):String!
        createComment(TweetId:ID!,comment: String):Comment!
