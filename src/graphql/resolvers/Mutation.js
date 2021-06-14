@@ -80,7 +80,6 @@ module.exports = {
         return new Error("user not found");
       }
       const updatedUser = await user.update(args);
-      console.log("update args", args);
       return updatedUser;
     } catch (error) {
       return error;
@@ -90,14 +89,12 @@ module.exports = {
     const UserId = authenticateUser(context);
 
     try {
-      console.log(UserId);
       const tweet = await models.Tweet.create({
         UserId: UserId,
         content: content,
         imgUrl,
       });
       context.pubsub.publish("newTweet", { newTweet: tweet });
-      console.log("tweet", tweet);
       return tweet;
     } catch (error) {
       return error;

@@ -39,7 +39,7 @@ module.exports = {
         nest: true,
         subQuery: true,
       });
-      console.log("user", user);
+
       return user;
     } catch (error) {
       return error.message;
@@ -78,11 +78,24 @@ module.exports = {
       const tweet = await models.Tweet.findAll({
         // where: { UserId: id },
         include: [
-          { model: models.Comment, required: false },
-          { model: models.User, required: false },
-          { model: models.Like, required: false },
+          {
+            model: models.Comment,
+            required: false,
+            order: [["createdAt", "DESC"]],
+          },
+          {
+            model: models.User,
+            required: false,
+            order: [["createdAt", "DESC"]],
+          },
+          {
+            model: models.Like,
+            required: false,
+            order: [["createdAt", "DESC"]],
+          },
         ],
         nest: true,
+        order: [["createdAt", "DESC"]],
       });
       return tweet;
     } catch (error) {
@@ -98,7 +111,7 @@ module.exports = {
           { model: models.User, required: false },
           { model: models.Tweet, required: false },
         ],
-
+        order: [["createdAt", "DESC"]],
         nest: true,
       });
       return comment;
@@ -115,6 +128,7 @@ module.exports = {
     try {
       const likes = await models.Like.findAll({
         where: { UserId: userId },
+        order: [["createdAt", "DESC"]],
       });
       if (likes) {
         return likes;
