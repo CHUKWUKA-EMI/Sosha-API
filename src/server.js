@@ -1,4 +1,4 @@
-const { GraphQLServer, PubSub } = require("graphql-yoga");
+const { GraphQLServer } = require("graphql-yoga");
 const express = require("express");
 const bodyparser = require("body-parser");
 const cors = require("cors");
@@ -9,9 +9,23 @@ const sequelize = require("./DB/connection");
 const models = require("./DB/database");
 const typeDefs = require("./graphql/schema/schema");
 const rootResolver = require("./graphql/resolvers/index");
+const { RedisPubSub } = require("graphql-redis-subscriptions");
+const Redis = require("ioredis");
 
 dotenv.config();
-const pubsub = new PubSub();
+// const pubsub = new PubSub();
+const redisOptions = {
+  host: process.env.REDIS_DOMAIN_NAME,
+  port: process.env.PORT_NUMBER,
+  retryStrategy: (times) => {
+    // reconnect after
+    return Math.min(times * 50, 2000);
+  },
+};
+const pubsub = new RedisPubSub({
+  publisher: new Redis(redisOptions),
+  subscriber: new Redis(redisOptions),
+});
 
 const Server = new GraphQLServer({
   typeDefs: typeDefs,

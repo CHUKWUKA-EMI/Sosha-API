@@ -125,6 +125,7 @@ module.exports = {
       }
       return new Error("Unable to delete tweet");
     } catch (error) {
+      console.log(error);
       return error.message;
     }
   },
