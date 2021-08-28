@@ -5,6 +5,7 @@ const { authenticateUser } = require("../../middleware/Authentication");
 const { PubSub } = require("graphql-yoga");
 const { sendEmail } = require("../../services/email");
 const emailTemplate = require("../../emailTemplate/template");
+const { Op } = require("sequelize");
 require("dotenv").config();
 
 const pubsub = new PubSub();
@@ -16,7 +17,7 @@ module.exports = {
         where: { email: email },
       });
       if (existingUser) {
-        throw new Error("User already exists");
+        return new Error("User already exists");
       }
 
       const hashedPswd = await bcrypt.hash(password, 10);
@@ -41,15 +42,15 @@ module.exports = {
     }
   },
 
-  login: async (root, { email, password }) => {
+  login: async (root, { email, password }, context) => {
     try {
       const user = await models.User.findOne({ where: { email: email } });
       if (!user) {
-        throw new Error("User not found");
+        return new Error("User not found");
       }
       const validPswd = await bcrypt.compare(password, user.password);
       if (!validPswd) {
-        throw new Error("Invalid password");
+        return new Error("Invalid password");
       }
       const isActivated = user.activated;
       if (!isActivated) {
@@ -57,8 +58,16 @@ module.exports = {
       }
       const { JWT_SECRET, JWT_EXPIRESIN } = process.env;
 
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
-        expiresIn: JWT_EXPIRESIN,
+      const token = jwt.sign(
+        { userId: user.id, userName: user.firstName + " " + user.lastName },
+        JWT_SECRET,
+        {
+          expiresIn: JWT_EXPIRESIN,
+        }
+      );
+      context.response.cookie("Authorization", token, {
+        // httpOnly: true,
+        secure: process.env.NODE_ENV === "production" ? true : false,
       });
       return {
         userId: user.id,
@@ -70,12 +79,14 @@ module.exports = {
     }
   },
   updateProfile: async (root, args, context) => {
-    const userId = authenticateUser(context);
-    if (!userId) {
+    const userData = authenticateUser(context);
+    if (!userData.userId) {
       return new Error("user not authenticated");
     }
     try {
-      const user = await models.User.findOne({ where: { id: userId } });
+      const user = await models.User.findOne({
+        where: { id: userData.userId },
+      });
       if (!user) {
         return new Error("user not found");
       }
@@ -86,11 +97,11 @@ module.exports = {
     }
   },
   createTweet: async (root, { content, imgUrl }, context) => {
-    const UserId = authenticateUser(context);
+    const userData = authenticateUser(context);
 
     try {
       const tweet = await models.Tweet.create({
-        UserId: UserId,
+        UserId: userData.userId,
         content: content,
         imgUrl,
       });
@@ -130,7 +141,7 @@ module.exports = {
     }
   },
   createComment: async (root, { TweetId, comment }, context) => {
-    const UserId = authenticateUser(context);
+    const userData = authenticateUser(context);
     try {
       const tweet = await models.Tweet.findOne({ where: { id: TweetId } });
       if (!tweet) {
@@ -139,11 +150,10 @@ module.exports = {
       const commented = await models.Comment.create({
         TweetId: TweetId,
         comment: comment,
-        UserId: UserId,
+        UserId: userData.userId,
       });
-      context.pubsub.publish("newComment", {
+      await context.pubsub.publish("newComment", {
         newComment: commented,
-        TweetId,
       });
       return commented;
     } catch (error) {
@@ -157,14 +167,15 @@ module.exports = {
       if (deleted) {
         return "Comment successfully deleted";
       }
-      throw new Error("Comment cannot be deleted");
+      return new Error("Comment cannot be deleted");
     } catch (error) {
       return error.message;
     }
   },
   like: async (root, { TweetId }, context) => {
-    const UserId = authenticateUser(context);
-    if (!UserId) {
+    const userData = authenticateUser(context);
+
+    if (!userData.userId) {
       return new Error("User not Authenticated");
     }
     try {
@@ -175,68 +186,64 @@ module.exports = {
 
       const userLikes = await models.Like.findOne({ where: { TweetId } });
       if (userLikes) {
-        const value = userLikes.value === true ? false : true;
-        const yourLike = await userLikes.update({ value });
-        return yourLike;
+        // const value = userLikes.value === true ? false : true;
+        // const yourLike = await userLikes.update({ value });
+        await models.Like.destroy({ where: { TweetId } });
+        return "tweet disliked";
       } else {
         const newLike = await models.Like.create({
           value: true,
           TweetId: TweetId,
-          UserId: UserId,
+          UserId: userData.userId,
         });
         context.pubsub.publish("newLike", { newLike: newLike, TweetId });
-        return newLike;
+        return "tweet liked";
       }
     } catch (error) {
       console.log("error", error);
-      return error;
+      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
     }
   },
-  follow: async (root, { targetid }, context) => {
-    const UserId = authenticateUser(context);
-    if (!UserId) {
-      return new Error("User not Authenticated");
-    }
-    try {
-      const user = await models.User.findOne({ where: { id: targetid } });
-      if (!user) {
-        return new Error("User not found");
-      }
 
-      const userFollow = await models.Follow.findOne({ where: { targetid } });
-      if (userFollow) {
-        const value = userFollow.value === true ? false : true;
-        const yourFollow = await userFollow.update({ value });
-        return yourFollow;
-      } else {
-        const newFollow = await models.Follow.create({
-          UserId: UserId,
-          targetid: targetid,
-          value: true,
-        });
-        context.pubsub.publish("newFollow", { newFollow: newFollow, targetid });
-        return newFollow;
-      }
-    } catch (error) {
-      return error;
-    }
-  },
-  createChat: async (root, { receiverId, message }, context) => {
-    const UserId = authenticateUser(context);
-    if (!UserId) {
+  createChat: async (
+    root,
+    { receiverId, friendshipId, receiverName, message },
+    context
+  ) => {
+    const userData = authenticateUser(context);
+    if (!userData.userId) {
       return new Error("user not authenticated");
     }
 
     try {
+      const friendship = await models.Friend.findOne({
+        where: {
+          id: friendshipId,
+        },
+      });
+      if (!friendship) {
+        return new Error(
+          "This user is not your friend. Send him/her a friend request, so you can connect to each other."
+        );
+      }
+
       const chat = await models.Chat.create({
-        UserId: UserId,
+        friendshipId: friendship.id,
+        senderId: userData.userId,
+        senderName: userData.userName,
         receiverId: receiverId,
+        receiverName: receiverName,
         message: message,
       });
-      context.pubsub.publish("newChat", { newChat: chat, receiverId });
+      context.pubsub.publish("newChat", {
+        newChat: chat,
+        friendshipId,
+      });
+
       return chat;
     } catch (error) {
-      return error;
+      console.log("error", error);
+      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
     }
   },
   userTyping: async (root, { receiverId }, context) => {
@@ -251,7 +258,219 @@ module.exports = {
       });
       return true;
     } catch (error) {
-      return error;
+      console.log("error", error);
+      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
+    }
+  },
+
+  sendFriendRequest: async (root, { friendId }, context) => {
+    const userData = authenticateUser(context);
+
+    if (friendId === userData.userId) {
+      return new Error("You cannot send a friend request to yourself");
+    }
+
+    try {
+      const existingRequest = await models.Friend.findOne({
+        where: { requesterId: userData.userId, friendId: friendId },
+      });
+
+      if (existingRequest) {
+        return new Error("You already have a friend request pending");
+      }
+      const friend = await models.User.findOne({ where: { id: friendId } });
+      if (!friend) {
+        return new Error("User not found");
+      }
+      const friendRequest = await models.Friend.create({
+        requesterId: userData.userId,
+        friendId: friend.id,
+      });
+      context.pubsub.publish("newFriendRequest", {
+        newFriendRequest: friendRequest,
+        friendId,
+      });
+      return friendRequest;
+    } catch (error) {
+      console.log("error", error);
+      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
+    }
+  },
+
+  acceptFriendRequest: async (root, { requesterId }, context) => {
+    const userData = authenticateUser(context);
+    try {
+      const request = await models.Friend.findOne({
+        where: { friendId: userData.userId, requesterId: requesterId },
+      });
+
+      if (!request) {
+        return new Error("Friend request not found");
+      }
+      const accept = await models.Friend.update(
+        {
+          friendship: true,
+          requeststatus: "accepted",
+        },
+        { where: { friendId: userData.userId, requesterId: requesterId } }
+      );
+
+      if (accept) {
+        context.pubsub.publish("acceptFriendRequest", {
+          acceptFriendRequest: request,
+          requesterId,
+        });
+        return request;
+      }
+
+      return new Error("Friend request could not be accepted. Please retry");
+    } catch (error) {
+      console.log("error", error);
+      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
+    }
+  },
+
+  rejectFriendRequest: async (root, { requesterId }, context) => {
+    const userData = authenticateUser(context);
+    try {
+      const request = await models.Friend.findOne({
+        where: { friendId: userData.userId, requesterId: requesterId },
+      });
+
+      if (!request) {
+        return new Error("Friend request not found");
+      }
+      const reject = await models.Friend.destroy({
+        where: { friendId: userData.userId, requesterId: requesterId },
+      });
+
+      if (reject) {
+        return "Friend reguest rejected";
+      }
+
+      return new Error("Friend request could not be rejected. Please retry");
+    } catch (error) {
+      console.log("error", error);
+      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
+    }
+  },
+
+  blockFriend: async (root, { userId }, context) => {
+    const userData = authenticateUser(context);
+    try {
+      const friend = await models.Friend.findOne({
+        where: {
+          [Op.or]: [
+            { friendId: userId, requesterId: userData.userId },
+            { requesterId: userId, friendId: userData.userId },
+          ],
+        },
+      });
+
+      if (!friend) {
+        return new Error("Friend not found");
+      }
+      const block = await models.Friend.update(
+        {
+          friendship: true,
+          requeststatus: "accepted",
+          blocked: true,
+        },
+        {
+          where: {
+            [Op.or]: [
+              { friendId: userId, requesterId: userData.userId },
+              { requesterId: userId, friendId: userData.userId },
+            ],
+          },
+        }
+      );
+
+      if (block) {
+        return "Friend blocked";
+      }
+
+      return new Error("Friend could not be blocked. Please retry");
+    } catch (error) {
+      console.log("error", error);
+      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
+    }
+  },
+
+  unblockFriend: async (root, { userId }, context) => {
+    const userData = authenticateUser(context);
+    try {
+      const friend = await models.Friend.findOne({
+        where: {
+          [Op.or]: [
+            { friendId: userId, requesterId: userData.userId },
+            { requesterId: userId, friendId: userData.userId },
+          ],
+        },
+      });
+
+      if (!friend) {
+        return new Error("Friend not found");
+      }
+      const unblock = await models.Friend.update(
+        {
+          friendship: true,
+          requeststatus: "accepted",
+          blocked: false,
+        },
+        {
+          where: {
+            [Op.or]: [
+              { friendId: userId, requesterId: userData.userId },
+              { requesterId: userId, friendId: userData.userId },
+            ],
+          },
+        }
+      );
+
+      if (unblock) {
+        return "Friend unblocked";
+      }
+
+      return new Error("Friend could not be unblocked. Please retry");
+    } catch (error) {
+      console.log("error", error);
+      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
+    }
+  },
+
+  unFriend: async (root, { userId }, context) => {
+    const userData = authenticateUser(context);
+    try {
+      const friend = await models.Friend.findOne({
+        where: {
+          [Op.or]: [
+            { friendId: userId, requesterId: userData.userId },
+            { requesterId: userId, friendId: userData.userId },
+          ],
+        },
+      });
+
+      if (!friend) {
+        return new Error("Friend not found");
+      }
+      const unfriend = await models.Friend.destroy({
+        where: {
+          [Op.or]: [
+            { friendId: userId, requesterId: userData.userId },
+            { requesterId: userId, friendId: userData.userId },
+          ],
+        },
+      });
+
+      if (unfriend) {
+        return "Friend unfriended";
+      }
+
+      return new Error("Friend could not be unfriended. Please retry");
+    } catch (error) {
+      console.log("error", error);
+      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
     }
   },
 };

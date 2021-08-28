@@ -8,11 +8,15 @@ module.exports = {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
       },
-      UserId: {
+      friendshipId: {
         type: Sequelize.UUID,
         allowNull: false,
       },
-      username: {
+      senderId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+      },
+      senderName: {
         type: Sequelize.STRING,
       },
       receiverId: {

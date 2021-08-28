@@ -9,8 +9,7 @@ module.exports = {
     subscribe: withFilter(
       (_, {}, { pubsub }) => pubsub.asyncIterator("newComment"),
       (payload, variables) => {
-        console.log("subscription", payload, variables);
-        return payload.TweetId === variables.TweetId;
+        return payload.newComment.TweetId === variables.TweetId;
       }
     ),
   },
@@ -22,19 +21,29 @@ module.exports = {
       }
     ),
   },
-  newFollow: {
+  newFriendRequest: {
     subscribe: withFilter(
-      (_, {}, { pubsub }) => pubsub.asyncIterator("newFollow"),
+      (_, {}, { pubsub }) => pubsub.asyncIterator("newFriendRequest"),
       (payload, variables) => {
-        return payload.targetid === variables.targetid;
+        return payload.friendId === variables.friendId;
       }
     ),
   },
+
+  acceptFriendRequest: {
+    subscribe: withFilter(
+      (_, {}, { pubsub }) => pubsub.asyncIterator("acceptFriendRequest"),
+      (payload, variables) => {
+        return payload.requesterId === variables.requesterId;
+      }
+    ),
+  },
+
   newChat: {
     subscribe: withFilter(
       (_, {}, { pubsub }) => pubsub.asyncIterator("newChat"),
       (payload, variables) => {
-        return payload.receiverId === variables.receiverId;
+        return payload.friendshipId === variables.friendshipId;
       }
     ),
   },

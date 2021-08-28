@@ -3,7 +3,7 @@ const sequelize = require("../DB/connection");
 const { DataTypes } = require("sequelize");
 
 const Follow = sequelize.define(
-  "Follow",
+  "friend",
   {
     id: {
       allowNull: false,
@@ -11,15 +11,24 @@ const Follow = sequelize.define(
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
     },
-    UserId: {
+    requesterId: {
       type: DataTypes.UUID,
       allowNull: false,
     },
-    targetid: {
+    friendId: {
       type: DataTypes.UUID,
       allowNull: false,
     },
-    value: {
+    friendship: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+
+    requeststatus: {
+      type: DataTypes.STRING,
+      defaultValue: "pending",
+    },
+    blocked: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },

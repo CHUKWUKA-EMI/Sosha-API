@@ -1,7 +1,7 @@
 const { GraphQLServer } = require("graphql-yoga");
 const express = require("express");
-const bodyparser = require("body-parser");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
 const jwt = require("jsonwebtoken");
@@ -15,16 +15,21 @@ const Redis = require("ioredis");
 dotenv.config();
 // const pubsub = new PubSub();
 const redisOptions = {
-  host: process.env.REDIS_DOMAIN_NAME,
   port: process.env.PORT_NUMBER,
+  host: process.env.REDIS_DOMAIN_NAME,
+  password: process.env.REDIS_AUTH,
   retryStrategy: (times) => {
     // reconnect after
     return Math.min(times * 50, 2000);
   },
 };
+
+const client = new Redis(redisOptions);
+const client2 = new Redis(redisOptions);
+
 const pubsub = new RedisPubSub({
-  publisher: new Redis(redisOptions),
-  subscriber: new Redis(redisOptions),
+  publisher: client,
+  subscriber: client2,
 });
 
 const Server = new GraphQLServer({
@@ -37,6 +42,15 @@ const Server = new GraphQLServer({
     };
   },
 });
+
+Server.express.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+);
+
+Server.express.use(cookieParser());
 
 Server.get("/activate/:token", async (req, res, next) => {
   const { token } = req.params;
@@ -57,17 +71,18 @@ Server.get("/activate/:token", async (req, res, next) => {
 });
 
 if (process.env.NODE_ENV === "development") {
-  Server.use(morgan("dev"));
+  Server.use(morgan("common"));
 }
 const port = process.env.PORT || 4000;
 
 const options = {
   bodyParserOptions: [
-    bodyparser.json(),
-    bodyparser.urlencoded({ extended: false }),
+    express.json(),
+    express.urlencoded({ extended: true, limit: "50mb" }),
   ],
-  cors: { cors },
+  // cors: { cors },
   port: port,
+  subscriptions: "/subscriptions",
 };
 models.sequelize.sync({ logging: false });
 
@@ -81,4 +96,6 @@ Server.start(options, async () => {
   console.log(
     `Server started in ${process.env.NODE_ENV} mode on port ${options.port}`
   );
+  const pingResponse = await client.ping();
+  console.log(`Redis server response: ${pingResponse}`);
 });

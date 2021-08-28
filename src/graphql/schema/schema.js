@@ -18,6 +18,30 @@ const typeDefs = `
        state:String
        website:String
        sex:String
+       username:String
+     }
+
+      type singleUser{
+       id:ID!
+       firstName:String!
+       lastName:String!
+       email: String!
+       phone:String!
+       Tweets:[Tweet!]
+       likes:[Like!]
+       chats:[Chat!]
+       createdAt: Date!
+       imgUrl:String
+       birthdate: Date
+       headline:String
+       bio:String
+       country:String
+       state:String
+       website:String
+       sex:String
+       username:String
+       friendship:Boolean!
+       requeststatus:String!
      }
      scalar Date
 
@@ -38,14 +62,16 @@ const typeDefs = `
      }
      type Chat{
        id: ID!
-       UserId:ID!
+       senderId:ID!
+       senderName:String!
        receiverId: ID!
+       receiverName:String!
+       friendshipId:String!
        message: String!
        createdAt: Date!
      }
      type Comment{
        id: ID!
-       Tweet: Tweet!
        User:User!
        comment:String!
        createdAt: Date!
@@ -56,22 +82,39 @@ const typeDefs = `
        value:Boolean!
        createdAt: Date!
      }
-     type Follow{
+     type Friend{
        id: ID!
-       targetid:ID!
-       value:Boolean!
-       user: User!
+       requesterId:ID!
+       friendId:ID!
+       friendship:Boolean!
+       requeststatus: String!
+       blocked: Boolean!
+     }
+
+     type UserFriendship{
+       friend: Friend
+       userId: ID
+       firstName:String
+       lastName:String
+       imgUrl:String
+       headline:String
+       username:String
+       lastMessage:String
      }
 
      type Query{
        user:User!
        retrieveUser(email:String, phone:String, username:String): User!
        tweets:[Tweet!]
+       tweet(TweetId:ID!):Tweet!
        comments: [Comment!]
+       tweetComments(TweetId:ID!):[Comment]
        likes:[Like!]
-       follows:[Follow!]
-       chats:[Chat!]
-
+       friends:[UserFriendship]
+       connectedFriends:[UserFriendship]
+       chats(friendshipId:ID!):[Chat]
+       getUserByName(username:String,token:String):singleUser!
+       getAllUsers: [User]
      }
 
      type Mutation{
@@ -84,19 +127,25 @@ const typeDefs = `
        deleteTweet(id:ID!):String!
        createComment(TweetId:ID!,comment: String):Comment!
        deleteComment(id:ID!):String!
-       like(TweetId:ID!):Like!
-       follow(targetid:ID!): Follow!
-       createChat(username:String, receiverId:ID!, message:String!): Chat!
+       like(TweetId:ID!):String!
+       sendFriendRequest(friendId:ID!):Friend!
+       acceptFriendRequest(requesterId:ID!):Friend!
+       rejectFriendRequest(requesterId:ID!):String!
+       blockFriend(userId:ID!):String!
+       unblockFriend(userId:ID!):String!
+       unFriend(userId:ID!):String!
+       createChat(receiverId:ID!,friendshipId:ID!,receiverName:String, message:String!): Chat!
        userTyping(receiverId: ID!): Boolean!
      }
 
      type Subscription{
        newTweet: Tweet!
-       newComment(TweetId:ID!): Comment!
+       newComment(TweetId:ID!): Comment
        newLike(TweetId:ID!): Like!
-       newFollow(targetid:ID!): Follow!
-       newChat(receiverId: ID!): Chat!
+       newChat(friendshipId: ID!): Chat!
        userTyping(receiverId: ID!):String!
+       newFriendRequest(friendId:ID!): Friend!
+       acceptFriendRequest(requesterId:ID!): Friend!
      }
 `;
 

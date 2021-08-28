@@ -5,7 +5,7 @@ const User = require("../models/user");
 const Tweet = require("../models/tweet");
 const Comment = require("../models/comment");
 const Like = require("../models/like");
-const Follow = require("../models/follow");
+const Friend = require("../models/friend");
 const Chat = require("../models/chat");
 const Acivate = require("../models/activationTokens");
 const ResetPassword = require("../models/password-reset");
@@ -26,15 +26,15 @@ User.hasMany(Like, {
   onDelete: "CASCADE",
 });
 
-User.hasMany(Follow, {
-  foreignKey: "UserId",
+User.hasMany(Friend, {
+  foreignKey: "requesterId",
   onDelete: "CASCADE",
 });
 
-User.hasMany(Chat, {
-  foreignKey: "UserId",
-  onDelete: "CASCADE",
-});
+// User.hasMany(Chat, {
+//   foreignKey: "UserId",
+//   onDelete: "CASCADE",
+// });
 
 //Tweet relations
 Tweet.belongsTo(User, {
@@ -67,15 +67,15 @@ Like.belongsTo(Tweet, {
   foreignKey: "TweetId",
 });
 
-//Follow reln
-Follow.belongsTo(User, {
-  foreignKey: "UserId",
+//Friend reln
+Friend.belongsTo(User, {
+  foreignKey: "requesterId",
 });
 
 //Chat reln
-Chat.belongsTo(User, {
-  foreignKey: "UserId",
-});
+// Chat.belongsTo(User, {
+//   foreignKey: "UserId",
+// });
 
 const models = {};
 
@@ -85,7 +85,7 @@ models.User = User;
 models.Tweet = Tweet;
 models.Comment = Comment;
 models.Like = Like;
-models.Follow = Follow;
+models.Friend = Friend;
 models.Chat = Chat;
 models.Acivate = Acivate;
 models.ResetPassword = ResetPassword;

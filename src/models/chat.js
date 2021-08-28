@@ -11,11 +11,15 @@ const Chat = sequelize.define(
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
     },
-    UserId: {
+    friendshipId: {
       type: DataTypes.UUID,
       allowNull: false,
     },
-    username: {
+    senderId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
+    senderName: {
       type: DataTypes.STRING,
     },
     receiverId: {

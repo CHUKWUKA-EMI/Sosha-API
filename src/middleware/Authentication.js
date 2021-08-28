@@ -3,21 +3,22 @@ require("dotenv").config();
 
 const { JWT_SECRET } = process.env;
 
+const freePath = (context) => {
+  return context.request.path.startsWith("/activate");
+};
 const authenticateUser = (context) => {
-  const Authorization = context.request.get("Authorization");
-  if (!Authorization) {
-    throw new Error("Not authenticated");
+  const token =
+    context.request.get("Authorization") ||
+    context.request.body.variables.token;
+  if (!freePath(context) && !token) {
+    return new Error("Token not found");
   }
-  const token = Authorization.replace("Bearer ", "");
-  if (!token) {
-    throw new Error("Token not found");
-  }
-  const { userId } = jwt.verify(token, JWT_SECRET);
-  if (!userId) {
-    throw new Error("userId not found in token");
+  const userData = jwt.verify(token, JWT_SECRET);
+  if (!userData.userId) {
+    return new Error("userId not found in token");
   }
 
-  return userId;
+  return userData;
 };
 module.exports = {
   authenticateUser,
