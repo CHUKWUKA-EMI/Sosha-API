@@ -1,14 +1,21 @@
 const models = require("../../DB/database");
+const Chats = require("../../chatSchema/chats");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { authenticateUser } = require("../../middleware/Authentication");
-const { PubSub } = require("graphql-yoga");
 const { sendEmail } = require("../../services/email");
 const emailTemplate = require("../../emailTemplate/template");
 const { Op } = require("sequelize");
+const ImageKit = require("imagekit");
 require("dotenv").config();
 
-const pubsub = new PubSub();
+//Imagekit Params
+const imagekit = new ImageKit({
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+});
+
 module.exports = {
   createUser: async (root, args) => {
     const { firstName, lastName, email, password, phone, birthdate } = args;
@@ -96,28 +103,62 @@ module.exports = {
       return error;
     }
   },
-  createTweet: async (root, { content, imgUrl }, context) => {
+  createTweet: async (
+    root,
+    { content, imgUrl, userId, imagekit_fileId },
+    context
+  ) => {
     const userData = authenticateUser(context);
 
     try {
+      const user = await models.User.findOne({ where: { id: userId } });
       const tweet = await models.Tweet.create({
         UserId: userData.userId,
         content: content,
         imgUrl,
+        imagekit_fileId,
       });
-      context.pubsub.publish("newTweet", { newTweet: tweet });
-      return tweet;
+      const responseBody = {
+        id: tweet.id,
+        content: tweet.content,
+        imgUrl: tweet.imgUrl,
+        imagekit_fileId: tweet.imagekit_fileId,
+        UserId: tweet.UserId,
+        createdAt: tweet.createdAt,
+        User: user,
+      };
+      context.pubsub.publish("newTweet", { newTweet: responseBody });
+
+      return responseBody;
     } catch (error) {
       return error;
     }
   },
 
-  updateTweet: async (root, { id, content, imgUrl }, context) => {
+  updateTweet: async (
+    root,
+    { id, content, imgUrl, imagekit_fileId },
+    context
+  ) => {
     authenticateUser(context);
     try {
       const tweet = await models.Tweet.findOne({ where: { id: id } });
       if (tweet) {
-        const updatedTweet = await tweet.update({ content: content, imgUrl });
+        //delete the old image from imagekit
+        if (tweet.imagekit_fileId) {
+          imagekit.deleteFile(tweet.imagekit_fileId, function (error, result) {
+            if (error) console.log(error);
+            else console.log(result);
+          });
+        }
+        const updatedTweet = await models.Tweet.update(
+          {
+            content: content,
+            imgUrl,
+            imagekit_fileId,
+          },
+          { where: { id: id } }
+        );
         return updatedTweet;
       }
       return new Error("Tweet not found");
@@ -126,15 +167,31 @@ module.exports = {
     }
   },
   deleteTweet: async (root, { id }, context) => {
-    authenticateUser(context);
+    const userData = authenticateUser(context);
+
     try {
+      const tweet = await models.Tweet.findOne({ where: { id: id } });
+      if (tweet.UserId !== userData.userId) {
+        return new Error("You are not authorized to delete this post");
+      }
+
+      //delete tweet's image from imagekit
+      if (tweet.imagekit_fileId) {
+        imagekit.deleteFile(tweet.imagekit_fileId, function (error, result) {
+          if (error) console.log(error);
+          else console.log(result);
+        });
+      }
+
       const deleteTweet = await models.Tweet.destroy({
         where: { id: id },
       });
+
       if (deleteTweet) {
-        return "Tweet deleted successfully";
+        return `${id}`;
+      } else {
+        return new Error("Unable to delete tweet");
       }
-      return new Error("Unable to delete tweet");
     } catch (error) {
       console.log(error);
       return error.message;
@@ -216,30 +273,28 @@ module.exports = {
     }
 
     try {
-      const friendship = await models.Friend.findOne({
-        where: {
-          id: friendshipId,
-        },
-      });
-      if (!friendship) {
-        return new Error(
-          "This user is not your friend. Send him/her a friend request, so you can connect to each other."
-        );
-      }
-
-      const chat = await models.Chat.create({
-        friendshipId: friendship.id,
+      // const chat = await models.Chat.create({
+      //   friendshipId: friendshipId,
+      //   senderId: userData.userId,
+      //   senderName: userData.userName,
+      //   receiverId: receiverId,
+      //   receiverName: receiverName,
+      //   message: message,
+      // });
+      const chat = new Chats({
+        friendshipId: friendshipId,
         senderId: userData.userId,
         senderName: userData.userName,
         receiverId: receiverId,
         receiverName: receiverName,
         message: message,
       });
+
+      await chat.save();
       context.pubsub.publish("newChat", {
         newChat: chat,
         friendshipId,
       });
-
       return chat;
     } catch (error) {
       console.log("error", error);

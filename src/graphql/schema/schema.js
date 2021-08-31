@@ -54,6 +54,7 @@ const typeDefs = `
          id: ID!
          content: String
          imgUrl:String
+         imagekit_fileId:String
          User:User!
          Comments: [Comment!]
          Likes:[Like!]
@@ -61,7 +62,7 @@ const typeDefs = `
          updatedAt: Date!
      }
      type Chat{
-       id: ID!
+       _id: ID
        senderId:ID!
        senderName:String!
        receiverId: ID!
@@ -122,8 +123,8 @@ const typeDefs = `
        login(email:String!, password: String!): AuthData!
        updateProfile(id:ID!,firstName:String,lastName:String, email: String, phone: String,imgUrl:String, birthdate:Date,headline:String,bio:String,country:String,state:String,website:String,sex:String):User!
        resetPassword(password:String!):AuthData!
-       createTweet(content: String,imgUrl:String):  Tweet!
-       updateTweet(id: ID!, content: String,imgUrl:String): Tweet!
+       createTweet(content: String,imgUrl:String,userId:ID!,imagekit_fileId:String):  Tweet!
+       updateTweet(id: ID!, content: String,imgUrl:String,imagekit_fileId:String): Tweet!
        deleteTweet(id:ID!):String!
        createComment(TweetId:ID!,comment: String):Comment!
        deleteComment(id:ID!):String!
@@ -140,6 +141,7 @@ const typeDefs = `
 
      type Subscription{
        newTweet: Tweet!
+       deleteTweet(id:ID!): String!
        newComment(TweetId:ID!): Comment
        newLike(TweetId:ID!): Like!
        newChat(friendshipId: ID!): Chat!

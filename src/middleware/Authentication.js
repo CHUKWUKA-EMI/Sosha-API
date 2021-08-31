@@ -4,7 +4,14 @@ require("dotenv").config();
 const { JWT_SECRET } = process.env;
 
 const freePath = (context) => {
-  return context.request.path.startsWith("/activate");
+  if (
+    context.request.path.startsWith("/activate") ||
+    context.request.path.startsWith("/imagekitAuth")
+  ) {
+    return true;
+  } else {
+    return false;
+  }
 };
 const authenticateUser = (context) => {
   const token =

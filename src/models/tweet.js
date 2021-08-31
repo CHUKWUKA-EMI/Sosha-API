@@ -18,6 +18,9 @@ const Tweet = sequelize.define(
     imgUrl: {
       type: DataTypes.TEXT,
     },
+    imagekit_fileId: {
+      type: DataTypes.STRING,
+    },
     UserId: {
       type: DataTypes.UUID,
       allowNull: false,

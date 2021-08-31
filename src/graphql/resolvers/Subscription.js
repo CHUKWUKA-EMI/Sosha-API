@@ -5,6 +5,14 @@ module.exports = {
       return pubsub.asyncIterator("newTweet");
     },
   },
+  deleteTweet: {
+    subscribe: withFilter(
+      (_, {}, { pubsub }) => pubsub.asyncIterator("deleteTweet"),
+      (payload, variables) => {
+        return payload.deleteTweet === variables.id;
+      }
+    ),
+  },
   newComment: {
     subscribe: withFilter(
       (_, {}, { pubsub }) => pubsub.asyncIterator("newComment"),

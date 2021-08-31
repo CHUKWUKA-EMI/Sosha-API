@@ -10,7 +10,9 @@ const models = require("./DB/database");
 const typeDefs = require("./graphql/schema/schema");
 const rootResolver = require("./graphql/resolvers/index");
 const { RedisPubSub } = require("graphql-redis-subscriptions");
-const Redis = require("ioredis");
+const mongoose = require("mongoose");
+const redis = require("redis");
+const ImageKit = require("imagekit");
 
 dotenv.config();
 // const pubsub = new PubSub();
@@ -18,18 +20,24 @@ const redisOptions = {
   port: process.env.PORT_NUMBER,
   host: process.env.REDIS_DOMAIN_NAME,
   password: process.env.REDIS_AUTH,
-  retryStrategy: (times) => {
+  retry_strategy: (times) => {
     // reconnect after
     return Math.min(times * 50, 2000);
   },
 };
 
-const client = new Redis(redisOptions);
-const client2 = new Redis(redisOptions);
+const client = redis.createClient(redisOptions);
+const client2 = redis.createClient(redisOptions);
 
 const pubsub = new RedisPubSub({
   publisher: client,
   subscriber: client2,
+});
+
+const imagekit = new ImageKit({
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
 });
 
 const Server = new GraphQLServer({
@@ -70,6 +78,11 @@ Server.get("/activate/:token", async (req, res, next) => {
   }
 });
 
+Server.get("/imagekitAuth", (req, res) => {
+  const result = imagekit.getAuthenticationParameters();
+  return res.json(result);
+});
+
 if (process.env.NODE_ENV === "development") {
   Server.use(morgan("common"));
 }
@@ -90,12 +103,23 @@ Server.start(options, async () => {
   try {
     await sequelize.authenticate({ logging: false });
     console.log("Database connected");
+    try {
+      await mongoose.connect(process.env.MONGODB_URL);
+      console.log("MongoDB connected");
+    } catch (error) {
+      console.log(error);
+    }
   } catch (err) {
     console.log(err.message);
+    process.exit(1);
   }
   console.log(
     `Server started in ${process.env.NODE_ENV} mode on port ${options.port}`
   );
-  const pingResponse = await client.ping();
-  console.log(`Redis server response: ${pingResponse}`);
+  try {
+    const pingResponse = client.ping();
+    console.log(`Redis server response: ${pingResponse}`);
+  } catch (error) {
+    console.log(error);
+  }
 });

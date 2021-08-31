@@ -1,5 +1,6 @@
 const { authenticateUser } = require("../../middleware/Authentication");
 const models = require("../../DB/database");
+const Chats = require("../../chatSchema/chats");
 const { Op } = require("sequelize");
 require("dotenv").config();
 const { JWT_SECRET } = process.env;
@@ -202,27 +203,28 @@ module.exports = {
 
       userConnectionS.map((u) => friendsIds.push(u.id));
 
-      const chats = await models.Chat.findAll({
-        where: {
-          friendshipId: {
-            [Op.in]: friendsIds,
-          },
-        },
-        order: [["createdAt", "DESC"]],
-      });
+      // const chats = await models.Chat.findAll({
+      //   where: {
+      //     friendshipId: {
+      //       [Op.in]: friendsIds,
+      //     },
+      //   },
+      //   order: [["createdAt", "DESC"]],
+      // });
 
       const friends = [];
       const messages = [];
       users.filter((u) => {
         if (userConnectionS.length > 0) {
           userConnectionS.map((f) => {
-            if (chats.length > 0) {
-              chats.map((chat) => {
-                if (chat.friendshipId === f.id) {
-                  messages.push(chat);
-                }
-              });
-            }
+            // if (chats.length > 0) {
+            //   chats.map((chat) => {
+            //     console.log("chat", chat);
+            //     if (chat.friendshipId === f.id) {
+            //       messages.push(chat);
+            //     }
+            //   });
+            // }
             if (
               u.id !== userData.userId &&
               (u.id === f.requesterId || u.id === f.friendId)
@@ -235,7 +237,7 @@ module.exports = {
                 imgUrl: u.imgUrl,
                 headline: u.headline,
                 username: `${u.firstName}_${u.lastName}_${u.id}`,
-                lastMessage: messages.length > 0 ? messages[0].message : "",
+                // lastMessage: messages.length > 0 ? messages[0].message : "",
               });
             }
           });
@@ -272,7 +274,7 @@ module.exports = {
           },
         ],
         nest: true,
-        order: [["createdAt", "ASC"]],
+        order: [["createdAt", "DESC"]],
       });
       return tweet;
     } catch (error) {
@@ -368,17 +370,12 @@ module.exports = {
       return new Error("user not authenticated");
     }
     try {
-      // const friendship = await models.Friend.findOne({
-      //   where: { id: friendshipId },
+      // const chats = await models.Chat.findAll({
+      //   where: { friendshipId: friendshipId },
       // });
-      // if (!friendship) {
-      //   return new Error(
-      //     "You are not friends with this user. Please send a friend request."
-      //   );
-      // }
-      const chats = await models.Chat.findAll({
-        where: { friendshipId: friendshipId },
-      });
+      const chats = await Chats.find()
+        .where("friendshipId")
+        .equals(friendshipId);
       return chats;
     } catch (error) {
       return error;
