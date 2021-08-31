@@ -7,7 +7,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=production node src/server.js",
+    "start": "NODE_ENV=production node src/server.js",
     "dev": "cross-env NODE_ENV=development nodemon src/server.js"
   },
   "keywords": [
@@ -35,8 +35,10 @@
     "graphql-redis-subscriptions": "^2.4.0",
     "graphql-subscriptions": "^1.2.1",
     "graphql-yoga": "^1.18.3",
+    "imagekit": "^3.2.0",
     "ioredis": "^4.27.6",
     "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.0.2",
     "morgan": "^1.10.0",
     "pg": "^8.3.3",
     "pg-hstore": "^2.3.3",
