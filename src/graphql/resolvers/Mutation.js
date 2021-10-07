@@ -54,7 +54,6 @@ module.exports = {
         password: hashedPswd,
         phone: phoneNumber,
         birthdate: new Date(birthdate).toUTCString(),
-        // phone_verification_code: code,
         country: region_code,
       });
       const message = emailTemplate(user);
