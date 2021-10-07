@@ -3,6 +3,7 @@ require("dotenv").config();
 module.exports = {
   development: {
     url: process.env.DATABASE_URL,
+    host: "lallah.db.elephantsql.com",
     dialect: "postgres",
     operatorsAliases: 1,
   },
