@@ -17,9 +17,7 @@ const ImageKit = require("imagekit");
 dotenv.config();
 // const pubsub = new PubSub();
 const redisOptions = {
-  port: process.env.PORT_NUMBER,
-  host: process.env.REDIS_DOMAIN_NAME,
-  password: process.env.REDIS_AUTH,
+  url: process.env.REDIS_URL,
   retry_strategy: (times) => {
     // reconnect after
     return Math.min(times * 50, 2000);

@@ -119,7 +119,7 @@ const typeDefs = `
      }
 
      type Mutation{
-       createUser(firstName:String!,lastName:String!, email: String!,password:String!, phone: String!, birthdate:Date):User!
+       createUser(firstName:String!,lastName:String!, email: String!,password:String!, phone: String!,region_code:String, birthdate:Date):User!
        login(email:String!, password: String!): AuthData!
        updateProfile(id:ID!,firstName:String,lastName:String, email: String, phone: String,imgUrl:String, birthdate:Date,headline:String,bio:String,country:String,state:String,website:String,sex:String):User!
        resetPassword(password:String!):AuthData!

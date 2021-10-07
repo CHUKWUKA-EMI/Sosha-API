@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const { authenticateUser } = require("../../middleware/Authentication");
 const { sendEmail } = require("../../services/email");
 const emailTemplate = require("../../emailTemplate/template");
+// const { sendSMS } = require("../../services/sms");
+const { validatePhoneNumber } = require("../../utils/phoneValidator");
 const { Op } = require("sequelize");
 const ImageKit = require("imagekit");
 require("dotenv").config();
@@ -18,7 +20,21 @@ const imagekit = new ImageKit({
 
 module.exports = {
   createUser: async (root, args) => {
-    const { firstName, lastName, email, password, phone, birthdate } = args;
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      phone,
+      region_code,
+      birthdate,
+    } = args;
+
+    const phoneValidate = validatePhoneNumber(phone, region_code.toUpperCase());
+    if (phoneValidate.status === false) {
+      return new Error(phoneValidate.message);
+    }
+
     try {
       const existingUser = await models.User.findOne({
         where: { email: email },
@@ -28,21 +44,33 @@ module.exports = {
       }
 
       const hashedPswd = await bcrypt.hash(password, 10);
+      let code = Math.random() * 10000;
+      code = code.toString().split(".")[0];
+      const phoneNumber = phoneValidate.message.replace(/ /g, "");
       const user = await models.User.create({
         firstName: firstName,
         lastName: lastName,
         email: email,
         password: hashedPswd,
-        phone: phone,
+        phone: phoneNumber,
         birthdate: new Date(birthdate).toUTCString(),
+        phone_verification_code: code,
+        country: region_code,
       });
       const message = emailTemplate(user);
-      await sendEmail(
-        `Developer-Justice <pistischaris494@gmail.com>`,
-        email,
-        "Email Confirmation",
-        message
-      );
+
+      await Promise.all([
+        sendEmail(
+          `Developer-Justice <pistischaris494@gmail.com>`,
+          email,
+          "Email Confirmation",
+          message
+        ),
+        // sendSMS({
+        //   to: phoneNumber,
+        //   message: `Your verification code is ${code}`,
+        // }),
+      ]);
       return user;
     } catch (error) {
       return error;

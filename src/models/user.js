@@ -92,6 +92,14 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    phone_verification_code: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    phone_verified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   },
   {}
 );
