@@ -44,8 +44,8 @@ module.exports = {
       }
 
       const hashedPswd = await bcrypt.hash(password, 10);
-      let code = Math.random() * 10000;
-      code = code.toString().split(".")[0];
+      // let code = Math.random() * 10000;
+      // code = code.toString().split(".")[0];
       const phoneNumber = phoneValidate.message.replace(/ /g, "");
       const user = await models.User.create({
         firstName: firstName,
@@ -54,7 +54,7 @@ module.exports = {
         password: hashedPswd,
         phone: phoneNumber,
         birthdate: new Date(birthdate).toUTCString(),
-        phone_verification_code: code,
+        // phone_verification_code: code,
         country: region_code,
       });
       const message = emailTemplate(user);
