@@ -8,7 +8,8 @@
   "main": "server.js",
   "scripts": {
     "start": "NODE_ENV=production node src/server.js",
-    "dev": "cross-env NODE_ENV=development nodemon src/server.js"
+    "dev": "cross-env NODE_ENV=development nodemon src/server.js",
+    "postinstall": "cd src && npx sequelize-cli db:migrate"
   },
   "keywords": [
     "graphql-yoga",
