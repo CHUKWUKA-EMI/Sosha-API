@@ -59,7 +59,12 @@ module.exports = {
       const message = emailTemplate(user);
 
       await Promise.all([
-        sendEmail(`Admin<@Sosha>`, email, "Email Confirmation", message),
+        sendEmail(
+          `Admin@Sosha<${process.env.SUPPORT_EMAIL}>`,
+          email,
+          "Email Confirmation",
+          message
+        ),
         // sendSMS({
         //   to: phoneNumber,
         //   message: `Your verification code is ${code}`,
