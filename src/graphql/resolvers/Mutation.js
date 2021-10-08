@@ -60,7 +60,7 @@ module.exports = {
 
       await Promise.all([
         sendEmail(
-          `Admin@Sosha<${process.env.SUPPORT_EMAIL}>`,
+          `Admin<${process.env.SUPPORT_EMAIL}>`,
           email,
           "Email Confirmation",
           message
