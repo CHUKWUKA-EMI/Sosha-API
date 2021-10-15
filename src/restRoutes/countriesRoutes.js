@@ -17,7 +17,9 @@ router.get("/", async (_, res) => {
     const countries_data = countries.data.data.map((country) => ({
       name: country.name,
       region_code: country.iso3.slice(0, 2),
-      flag: flagData.find((flag) => flag.name === country.name)?.flag,
+      flag: flagData.find((flag) => flag.name === country.name)
+        ? flagData.find((flag) => flag.name === country.name).flag
+        : "",
       states: country.states,
     }));
     const supportedCountries = countries_data.filter((country) =>
