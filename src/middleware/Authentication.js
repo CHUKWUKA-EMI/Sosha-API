@@ -6,7 +6,8 @@ const { JWT_SECRET } = process.env;
 const freePath = (context) => {
   if (
     context.request.path.startsWith("/activate") ||
-    context.request.path.startsWith("/imagekitAuth")
+    context.request.path.startsWith("/imagekitAuth") ||
+    context.request.path.startsWith("/regions")
   ) {
     return true;
   } else {

@@ -26,6 +26,8 @@ module.exports = {
       email,
       password,
       phone,
+      country,
+      state,
       region_code,
       birthdate,
     } = args;
@@ -54,7 +56,8 @@ module.exports = {
         password: hashedPswd,
         phone: phoneNumber,
         birthdate: new Date(birthdate).toUTCString(),
-        country: region_code,
+        country: country,
+        state: state,
       });
       const message = emailTemplate(user);
 
@@ -551,6 +554,26 @@ module.exports = {
 
       return new Error("Friend could not be unfriended. Please retry");
     } catch (error) {
+      console.log("error", error);
+      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
+    }
+  },
+
+  deleteUser: async (root, { id }, context) => {
+    authenticateUser(context);
+    try {
+      const user = await models.User.findOne({ where: { id } });
+      if (!user) {
+        return new Error("User not found");
+      }
+      const destroy = await models.User.destroy({
+        where: { id },
+      });
+      if (destroy) {
+        return "User deleted";
+      }
+      return new Error("User could not be deleted. Please retry");
+    } catch (e) {
       console.log("error", error);
       return `We couldn't process your request. Please retry.\n HINT: ${error}`;
     }

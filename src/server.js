@@ -9,6 +9,8 @@ const sequelize = require("./DB/connection");
 const models = require("./DB/database");
 const typeDefs = require("./graphql/schema/schema");
 const rootResolver = require("./graphql/resolvers/index");
+const countriesRoutes = require("./restRoutes/countriesRoutes");
+const utilRoutes = require("./restRoutes/utilRoutes");
 const { RedisPubSub } = require("graphql-redis-subscriptions");
 const mongoose = require("mongoose");
 const redis = require("redis");
@@ -58,24 +60,11 @@ Server.express.use(
 
 Server.express.use(cookieParser());
 
-Server.get("/activate/:token", async (req, res, next) => {
-  const { token } = req.params;
-  try {
-    const { id } = jwt.verify(token, process.env.JWT_SECRET);
-    if (id) {
-      const user = await models.User.findOne({ where: { id } });
-      if (user) {
-        await user.update({ activated: true });
-        return res.redirect(`${process.env.FRONTEND_URL}/login`);
-      }
-      return res.send(`User with ID ${id} not found`);
-    }
-    return res.send("Invalid token");
-  } catch (error) {
-    next(error);
-  }
-});
+//Rest Endpoints
+Server.express.use("/regions", countriesRoutes);
+Server.express.use("/activate", utilRoutes);
 
+//Imagekit auth endpoint
 Server.get("/imagekitAuth", (req, res) => {
   const result = imagekit.getAuthenticationParameters();
   return res.json(result);

@@ -119,10 +119,11 @@ const typeDefs = `
      }
 
      type Mutation{
-       createUser(firstName:String!,lastName:String!, email: String!,password:String!, phone: String!,region_code:String, birthdate:Date):User!
+       createUser(firstName:String!,lastName:String!, email: String!,password:String!, phone: String!,country:String!, state:String!,region_code:String!, birthdate:Date):User!
        login(email:String!, password: String!): AuthData!
        updateProfile(id:ID!,firstName:String,lastName:String, email: String, phone: String,imgUrl:String, birthdate:Date,headline:String,bio:String,country:String,state:String,website:String,sex:String):User!
        resetPassword(password:String!):AuthData!
+       deleteUser(id:ID!): String!
        createTweet(content: String,imgUrl:String,userId:ID!,imagekit_fileId:String):  Tweet!
        updateTweet(id: ID!, content: String,imgUrl:String,imagekit_fileId:String): Tweet!
        deleteTweet(id:ID!):String!

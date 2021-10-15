@@ -6,7 +6,7 @@ const validatePhoneNumber = (phoneNumber, region_code) => {
   if (!phoneUtil.getSupportedRegions().includes(region_code.toUpperCase())) {
     return {
       status: false,
-      message: `Invalid region_code (visit https://www.iso.org/obp/ui/#search to get the Alpha-2 code for your country).`,
+      message: `Your region is not supported`,
     };
   }
   const number = phoneUtil.parseAndKeepRawInput(
