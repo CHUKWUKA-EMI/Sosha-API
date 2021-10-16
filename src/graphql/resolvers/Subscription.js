@@ -29,29 +29,18 @@ module.exports = {
       }
     ),
   },
-  newFriendRequest: {
-    subscribe: withFilter(
-      (_, {}, { pubsub }) => pubsub.asyncIterator("newFriendRequest"),
-      (payload, variables) => {
-        return payload.friendId === variables.friendId;
-      }
-    ),
-  },
-
-  acceptFriendRequest: {
-    subscribe: withFilter(
-      (_, {}, { pubsub }) => pubsub.asyncIterator("acceptFriendRequest"),
-      (payload, variables) => {
-        return payload.requesterId === variables.requesterId;
-      }
-    ),
-  },
 
   newChat: {
     subscribe: withFilter(
       (_, {}, { pubsub }) => pubsub.asyncIterator("newChat"),
-      (payload, variables) => {
-        return payload.friendshipId === variables.friendshipId;
+      ({ newChat }, variables, { user }) => {
+        console.log("user", user);
+        return (
+          (newChat.senderId == user.userId &&
+            newChat.receiverId == variables.receiverId) ||
+          (newChat.senderId == variables.receiverId &&
+            newChat.receiverId == user.userId)
+        );
       }
     ),
   },

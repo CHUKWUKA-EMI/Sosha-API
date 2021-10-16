@@ -20,6 +20,26 @@ const typeDefs = `
        sex:String
        username:String
      }
+     
+     type Users{
+       id:ID!
+       firstName:String!
+       lastName:String!
+       email: String!
+       phone:String!
+       createdAt: Date!
+       imgUrl:String
+       birthdate: Date
+       headline:String
+       bio:String
+       country:String
+       state:String
+       website:String
+       sex:String
+       username:String
+       friendship:Boolean!
+       blocked: Boolean!
+     }
 
       type singleUser{
        id:ID!
@@ -111,11 +131,10 @@ const typeDefs = `
        comments: [Comment!]
        tweetComments(TweetId:ID!):[Comment]
        likes:[Like!]
-       friends:[UserFriendship]
        connectedFriends:[UserFriendship]
-       chats(friendshipId:ID!):[Chat]
+       chats(senderId:ID!,receiverId:ID!):[Chat]
        getUserByName(username:String,token:String):singleUser!
-       getAllUsers: [User]
+       getAllUsers: [Users]
      }
 
      type Mutation{
@@ -130,9 +149,7 @@ const typeDefs = `
        createComment(TweetId:ID!,comment: String):Comment!
        deleteComment(id:ID!):String!
        like(TweetId:ID!):String!
-       sendFriendRequest(friendId:ID!):Friend!
-       acceptFriendRequest(requesterId:ID!):Friend!
-       rejectFriendRequest(requesterId:ID!):String!
+       addToChatConnections(friendId:ID!):Friend!
        blockFriend(userId:ID!):String!
        unblockFriend(userId:ID!):String!
        unFriend(userId:ID!):String!
@@ -145,10 +162,8 @@ const typeDefs = `
        deleteTweet(id:ID!): String!
        newComment(TweetId:ID!): Comment
        newLike(TweetId:ID!): Like!
-       newChat(friendshipId: ID!): Chat!
+       newChat(senderId:ID!,receiverId:ID!): Chat!
        userTyping(receiverId: ID!):String!
-       newFriendRequest(friendId:ID!): Friend!
-       acceptFriendRequest(requesterId:ID!): Friend!
      }
 `;
 

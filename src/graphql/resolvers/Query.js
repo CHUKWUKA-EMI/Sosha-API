@@ -83,14 +83,10 @@ module.exports = {
       });
       user["friendship"] =
         userConnection != null ? userConnection.friendship : false;
-      user["requeststatus"] =
-        userConnection != null && userConnection.friendId === user.id
-          ? userConnection.requeststatus
-          : "";
       return user;
     } catch (error) {
       console.log("error", error.message);
-      // return error.message
+      return error.message;
     }
   },
 
@@ -100,81 +96,40 @@ module.exports = {
       const users = await models.User.findAll({
         where: {
           activated: true,
+          [Op.not]: { id: userData.userId },
         },
       });
-
       const userConnectionS = await models.Friend.findAll({
         where: {
           [Op.or]: [
             { requesterId: userData.userId },
             { friendId: userData.userId },
           ],
+          friendship: true,
+          blocked: false,
         },
       });
 
-      const availableUsers = [];
-      users.filter((u) => {
-        if (userConnectionS.length > 0) {
-          userConnectionS.map((f) => {
-            if (
-              u.id !== userData.userId &&
-              u.id !== f.requesterId &&
-              u.id !== f.friendId
-            ) {
-              availableUsers.push(u);
-            }
-          });
+      users.map((user) => {
+        if (userConnectionS.length == 0) {
+          user["friendship"] = false;
+          user["blocked"] = false;
         } else {
-          if (u.id !== userData.userId) availableUsers.push(u);
-        }
-      });
-
-      return availableUsers;
-    } catch (error) {
-      return error.message;
-    }
-  },
-
-  friends: async (_, {}, context) => {
-    const userData = authenticateUser(context);
-    try {
-      const users = await models.User.findAll({
-        where: {
-          activated: true,
-        },
-      });
-
-      const userConnectionS = await models.Friend.findAll({
-        where: {
-          [Op.or]: [
-            { requesterId: userData.userId },
-            { friendId: userData.userId },
-          ],
-        },
-      });
-      // console.log("friends", userConnectionS);
-      const friend = [];
-      users.filter((u) => {
-        if (userConnectionS.length > 0) {
-          userConnectionS.map((f) => {
+          userConnectionS.map((userConnection) => {
             if (
-              u.id !== userData.userId &&
-              (u.id === f.requesterId || u.id === f.friendId)
+              user.id === userConnection.friendId ||
+              user.id === userConnection.requesterId
             ) {
-              friend.push({
-                friend: f,
-                userId: u.id,
-                firstName: u.firstName,
-                lastName: u.lastName,
-                imgUrl: u.imgUrl,
-                headline: u.headline,
-                username: `${u.firstName}_${u.lastName}_${u.id}`,
-              });
+              user["friendship"] = userConnection.friendship;
+              user["blocked"] = userConnection.blocked;
+            } else {
+              user["friendship"] = false;
+              user["blocked"] = false;
             }
           });
         }
       });
-      return friend;
+      return users;
     } catch (error) {
       return error.message;
     }
@@ -188,7 +143,7 @@ module.exports = {
           activated: true,
         },
       });
-      const friendsIds = [];
+
       const userConnectionS = await models.Friend.findAll({
         where: {
           [Op.or]: [
@@ -196,39 +151,43 @@ module.exports = {
             { friendId: userData.userId },
           ],
           friendship: true,
-          requeststatus: "accepted",
           blocked: false,
         },
       });
 
-      userConnectionS.map((u) => friendsIds.push(u.id));
-
-      // const chats = await models.Chat.findAll({
-      //   where: {
-      //     friendshipId: {
-      //       [Op.in]: friendsIds,
-      //     },
-      //   },
-      //   order: [["createdAt", "DESC"]],
-      // });
+      const chats = await Chats.find()
+        .where("senderId")
+        .equals(userData.userId)
+        .or("receiverId")
+        .equals(userData.userId)
+        .sort({ createdAt: -1 })
+        .exec();
 
       const friends = [];
       const messages = [];
       users.filter((u) => {
         if (userConnectionS.length > 0) {
           userConnectionS.map((f) => {
-            // if (chats.length > 0) {
-            //   chats.map((chat) => {
-            //     console.log("chat", chat);
-            //     if (chat.friendshipId === f.id) {
-            //       messages.push(chat);
-            //     }
-            //   });
-            // }
+            if (chats.length > 0) {
+              chats.map((chat) => {
+                console.log("chat", chat);
+                if (chat.senderId === f.id || chat.receiverId === f.id) {
+                  messages.push(chat);
+                }
+              });
+            }
             if (
               u.id !== userData.userId &&
               (u.id === f.requesterId || u.id === f.friendId)
             ) {
+              let lastMsg;
+              if (messages.length > 0) {
+                const filteredMsg = messages.filter(
+                  (msg) => msg.senderId === f.id || msg.receiverId === f.id
+                );
+                lastMsg = filteredMsg[0].message;
+              }
+
               friends.push({
                 friend: f,
                 userId: u.id,
@@ -237,7 +196,7 @@ module.exports = {
                 imgUrl: u.imgUrl,
                 headline: u.headline,
                 username: `${u.firstName}_${u.lastName}_${u.id}`,
-                // lastMessage: messages.length > 0 ? messages[0].message : "",
+                lastMessage: lastMsg ? lastMsg : "",
               });
             }
           });
@@ -364,18 +323,18 @@ module.exports = {
       return error;
     }
   },
-  chats: async (_, { friendshipId }, context) => {
+  chats: async (_, { senderId, receiverId }, context) => {
     const userData = authenticateUser(context);
     if (!userData.userId) {
       return new Error("user not authenticated");
     }
     try {
-      // const chats = await models.Chat.findAll({
-      //   where: { friendshipId: friendshipId },
-      // });
       const chats = await Chats.find()
-        .where("friendshipId")
-        .equals(friendshipId);
+        .where("senderId")
+        .equals(senderId)
+        .and("receiverId")
+        .equals(receiverId)
+        .exec();
       return chats;
     } catch (error) {
       return error;

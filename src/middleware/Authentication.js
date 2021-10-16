@@ -15,17 +15,26 @@ const freePath = (context) => {
   }
 };
 const authenticateUser = (context) => {
-  const token =
-    context.request.get("Authorization") ||
-    context.request.body.variables.token;
+  let token = context.request
+    ? context.request.get("Authorization") ||
+      context.request.body.variables.token
+    : context.connection.context.Authorization;
+
+  if (token === undefined && ctx.connection) {
+    token = ctx.connection.context.Authorization;
+  } else if (token === undefined && ctx.request.cookies) {
+    token = ctx.request.cookies.token;
+  }
+
   if (!freePath(context) && !token) {
     return new Error("Token not found");
   }
+
   const userData = jwt.verify(token, JWT_SECRET);
   if (!userData.userId) {
     return new Error("userId not found in token");
   }
-
+  context.user = userData;
   return userData;
 };
 module.exports = {
