@@ -155,13 +155,9 @@ module.exports = {
         },
       });
 
-      const chats = await Chats.find()
-        .where("senderId")
-        .equals(userData.userId)
-        .or("receiverId")
-        .equals(userData.userId)
-        .sort({ createdAt: -1 })
-        .exec();
+      const chats = await Chats.find({
+        $or: [{ senderId: userData.userId }, { receiverId: userData.userId }],
+      }).sort({ createdAt: -1 });
 
       const friends = [];
       const messages = [];
@@ -170,8 +166,7 @@ module.exports = {
           userConnectionS.map((f) => {
             if (chats.length > 0) {
               chats.map((chat) => {
-                console.log("chat", chat);
-                if (chat.senderId === f.id || chat.receiverId === f.id) {
+                if (chat.friendshipId == f.id) {
                   messages.push(chat);
                 }
               });
@@ -182,10 +177,10 @@ module.exports = {
             ) {
               let lastMsg;
               if (messages.length > 0) {
-                const filteredMsg = messages.filter(
-                  (msg) => msg.senderId === f.id || msg.receiverId === f.id
+                lastMsg = messages.filter(
+                  (m) => m.senderId === u.id || m.receiverId === u.id
                 );
-                lastMsg = filteredMsg[0].message;
+                lastMsg = lastMsg[lastMsg.length - 1].message;
               }
 
               friends.push({
@@ -202,7 +197,6 @@ module.exports = {
           });
         }
       });
-
       return friends;
     } catch (error) {
       return error.message;
@@ -323,18 +317,13 @@ module.exports = {
       return error;
     }
   },
-  chats: async (_, { senderId, receiverId }, context) => {
+  chats: async (_, { friendshipId }, context) => {
     const userData = authenticateUser(context);
     if (!userData.userId) {
       return new Error("user not authenticated");
     }
     try {
-      const chats = await Chats.find()
-        .where("senderId")
-        .equals(senderId)
-        .and("receiverId")
-        .equals(receiverId)
-        .exec();
+      const chats = await Chats.find({ friendshipId: friendshipId });
       return chats;
     } catch (error) {
       return error;

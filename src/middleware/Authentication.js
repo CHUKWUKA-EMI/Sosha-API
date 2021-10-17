@@ -20,10 +20,10 @@ const authenticateUser = (context) => {
       context.request.body.variables.token
     : context.connection.context.Authorization;
 
-  if (token === undefined && ctx.connection) {
-    token = ctx.connection.context.Authorization;
-  } else if (token === undefined && ctx.request.cookies) {
-    token = ctx.request.cookies.token;
+  if (token === undefined && context.connection) {
+    token = context.connection.context.Authorization;
+  } else if (token === undefined && context.request.cookies) {
+    token = context.request.cookies.token;
   }
 
   if (!freePath(context) && !token) {

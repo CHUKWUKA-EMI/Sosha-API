@@ -224,6 +224,9 @@ module.exports = {
   createComment: async (root, { TweetId, comment }, context) => {
     const userData = authenticateUser(context);
     try {
+      const user = await models.User.findOne({
+        where: { id: userData.userId },
+      });
       const tweet = await models.Tweet.findOne({ where: { id: TweetId } });
       if (!tweet) {
         return new Error("Tweet not found");
@@ -233,10 +236,19 @@ module.exports = {
         comment: comment,
         UserId: userData.userId,
       });
-      await context.pubsub.publish("newComment", {
-        newComment: commented,
+
+      const resData = {
+        id: commented.id,
+        TweetId: commented.TweetId,
+        comment: commented.comment,
+        createdAt: commented.createdAt,
+        UserId: commented.UserId,
+        User: user,
+      };
+      context.pubsub.publish("newComment", {
+        newComment: resData,
       });
-      return commented;
+      return resData;
     } catch (error) {
       return new Error(error.message);
     }
@@ -253,6 +265,7 @@ module.exports = {
       return error.message;
     }
   },
+
   like: async (root, { TweetId }, context) => {
     const userData = authenticateUser(context);
 
@@ -260,26 +273,62 @@ module.exports = {
       return new Error("User not Authenticated");
     }
     try {
+      const user = await models.User.findOne({
+        where: { id: userData.userId },
+      });
       const tweet = await models.Tweet.findOne({ where: { id: TweetId } });
       if (!tweet) {
         return new Error("Tweet not found");
       }
 
-      const userLikes = await models.Like.findOne({ where: { TweetId } });
-      if (userLikes) {
-        // const value = userLikes.value === true ? false : true;
-        // const yourLike = await userLikes.update({ value });
-        await models.Like.destroy({ where: { TweetId } });
-        return "tweet disliked";
+      const userLike = await models.Like.findOne({
+        where: { TweetId, UserId: userData.userId },
+      });
+      if (userLike) {
+        return new Error("You have already liked this tweet");
       } else {
         const newLike = await models.Like.create({
           value: true,
           TweetId: TweetId,
           UserId: userData.userId,
         });
-        context.pubsub.publish("newLike", { newLike: newLike, TweetId });
-        return "tweet liked";
+
+        const resData = {
+          id: newLike.id,
+          UserId: newLike.UserId,
+          value: newLike.value,
+          User: user,
+          TweetId: newLike.TweetId,
+          createdAt: newLike.createdAt,
+        };
+        context.pubsub.publish("newLike", { newLike: resData });
+        return resData;
       }
+    } catch (error) {
+      console.log("error", error);
+      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
+    }
+  },
+
+  unlike: async (root, { TweetId }, context) => {
+    const userData = authenticateUser(context);
+
+    if (!userData.userId) {
+      return new Error("User not Authenticated");
+    }
+
+    try {
+      const userLike = await models.Like.findOne({
+        where: { TweetId, UserId: userData.userId },
+      });
+      if (userLike) {
+        await models.Like.destroy({
+          where: { TweetId, UserId: userData.userId },
+        });
+        return `${userLike.id}`;
+      }
+
+      return new Error("Like doesn't exist");
     } catch (error) {
       console.log("error", error);
       return `We couldn't process your request. Please retry.\n HINT: ${error}`;
@@ -309,7 +358,6 @@ module.exports = {
       await chat.save();
       context.pubsub.publish("newChat", {
         newChat: chat,
-        friendshipId,
       });
       return chat;
     } catch (error) {
@@ -342,6 +390,18 @@ module.exports = {
     }
 
     try {
+      const existingFriend = await models.Friend.findOne({
+        where: {
+          [Op.or]: [
+            { requesterId: userData.userId, friendId: friendId },
+            { requesterId: friendId, friendId: userData.userId },
+          ],
+        },
+      });
+      if (existingFriend) {
+        return new Error("You are already connected");
+      }
+
       const friend = await models.User.findOne({ where: { id: friendId } });
       if (!friend) {
         return new Error("User not found");

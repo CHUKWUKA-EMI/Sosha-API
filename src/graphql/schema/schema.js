@@ -96,13 +96,18 @@ const typeDefs = `
        User:User!
        comment:String!
        createdAt: Date!
+       TweetId:ID!
      }
      type Like{
        id: ID!
        UserId:ID!
        value:Boolean!
+       User:User!
+       TweetId:ID!
        createdAt: Date!
      }
+
+
      type Friend{
        id: ID!
        requesterId:ID!
@@ -132,7 +137,7 @@ const typeDefs = `
        tweetComments(TweetId:ID!):[Comment]
        likes:[Like!]
        connectedFriends:[UserFriendship]
-       chats(senderId:ID!,receiverId:ID!):[Chat]
+       chats(friendshipId:ID!):[Chat]
        getUserByName(username:String,token:String):singleUser!
        getAllUsers: [Users]
      }
@@ -148,7 +153,8 @@ const typeDefs = `
        deleteTweet(id:ID!):String!
        createComment(TweetId:ID!,comment: String):Comment!
        deleteComment(id:ID!):String!
-       like(TweetId:ID!):String!
+       like(TweetId:ID!):Like!
+       unlike(TweetId:ID!):String!
        addToChatConnections(friendId:ID!):Friend!
        blockFriend(userId:ID!):String!
        unblockFriend(userId:ID!):String!
@@ -162,7 +168,7 @@ const typeDefs = `
        deleteTweet(id:ID!): String!
        newComment(TweetId:ID!): Comment
        newLike(TweetId:ID!): Like!
-       newChat(senderId:ID!,receiverId:ID!): Chat!
+       newChat(friendshipId:ID!): Chat!
        userTyping(receiverId: ID!):String!
      }
 `;

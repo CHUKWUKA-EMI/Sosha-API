@@ -16,16 +16,16 @@ module.exports = {
   newComment: {
     subscribe: withFilter(
       (_, {}, { pubsub }) => pubsub.asyncIterator("newComment"),
-      (payload, variables) => {
-        return payload.newComment.TweetId === variables.TweetId;
+      ({ newComment }, variables) => {
+        return newComment.TweetId === variables.TweetId;
       }
     ),
   },
   newLike: {
     subscribe: withFilter(
       (_, {}, { pubsub }) => pubsub.asyncIterator("newLike"),
-      (payload, variables) => {
-        return payload.TweetId === variables.TweetId;
+      ({ newLike }, variables) => {
+        return newLike.TweetId === variables.TweetId;
       }
     ),
   },
@@ -34,13 +34,7 @@ module.exports = {
     subscribe: withFilter(
       (_, {}, { pubsub }) => pubsub.asyncIterator("newChat"),
       ({ newChat }, variables, { user }) => {
-        console.log("user", user);
-        return (
-          (newChat.senderId == user.userId &&
-            newChat.receiverId == variables.receiverId) ||
-          (newChat.senderId == variables.receiverId &&
-            newChat.receiverId == user.userId)
-        );
+        return newChat.friendshipId == variables.friendshipId;
       }
     ),
   },
