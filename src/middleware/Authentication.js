@@ -7,7 +7,8 @@ const freePath = (context) => {
   if (
     context.request.path.startsWith("/activate") ||
     context.request.path.startsWith("/imagekitAuth") ||
-    context.request.path.startsWith("/regions")
+    context.request.path.startsWith("/regions") ||
+    context.request.path.startsWith("/user/password_reset")
   ) {
     return true;
   } else {
@@ -34,7 +35,7 @@ const authenticateUser = (context) => {
   if (!userData.userId) {
     return new Error("userId not found in token");
   }
-  context.user = userData;
+  context.request.user = userData;
   return userData;
 };
 module.exports = {

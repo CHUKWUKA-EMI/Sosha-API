@@ -64,6 +64,10 @@ const User = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    imagekit_fileId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     activated: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
@@ -99,6 +103,14 @@ const User = sequelize.define(
     phone_verified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    isLoggedIn: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    user_role: {
+      type: DataTypes.STRING,
+      defaultValue: "user",
     },
   },
   {}

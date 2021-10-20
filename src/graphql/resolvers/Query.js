@@ -190,6 +190,7 @@ module.exports = {
                 lastName: u.lastName,
                 imgUrl: u.imgUrl,
                 headline: u.headline,
+                isLoggedIn: u.isLoggedIn,
                 username: `${u.firstName}_${u.lastName}_${u.id}`,
                 lastMessage: lastMsg ? lastMsg : "",
               });

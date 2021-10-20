@@ -11,6 +11,8 @@ const typeDefs = require("./graphql/schema/schema");
 const rootResolver = require("./graphql/resolvers/index");
 const countriesRoutes = require("./restRoutes/countriesRoutes");
 const utilRoutes = require("./restRoutes/utilRoutes");
+const userRoutes = require("./restRoutes/userRoutes");
+const adminRoutes = require("./restRoutes/adminRoutes");
 const { RedisPubSub } = require("graphql-redis-subscriptions");
 const mongoose = require("mongoose");
 const redis = require("redis");
@@ -63,6 +65,8 @@ Server.express.use(cookieParser());
 //Rest Endpoints
 Server.express.use("/regions", countriesRoutes);
 Server.express.use("/activate", utilRoutes);
+Server.express.use("/user", userRoutes);
+Server.express.use("/admin", adminRoutes);
 
 //Imagekit auth endpoint
 Server.get("/imagekitAuth", (req, res) => {

@@ -46,4 +46,10 @@ module.exports = {
       }
     ),
   },
+
+  userLoggedIn: {
+    subscribe: (_, {}, { pubsub }) => {
+      return pubsub.asyncIterator("userLoggedIn");
+    },
+  },
 };

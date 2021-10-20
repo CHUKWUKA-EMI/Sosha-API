@@ -57,6 +57,7 @@ module.exports = {
         birthdate: new Date(birthdate).toUTCString(),
         country: country,
         state: state,
+        user_role: email === process.env.ADMIN_EMAIL ? "admin" : "user",
       });
       const message = emailTemplate(user);
 
@@ -90,7 +91,11 @@ module.exports = {
       const { JWT_SECRET, JWT_EXPIRESIN } = process.env;
 
       const token = jwt.sign(
-        { userId: user.id, userName: user.firstName + " " + user.lastName },
+        {
+          userId: user.id,
+          user_role: user.user_role,
+          userName: user.firstName + " " + user.lastName,
+        },
         JWT_SECRET,
         {
           expiresIn: JWT_EXPIRESIN,
@@ -100,6 +105,14 @@ module.exports = {
         // httpOnly: true,
         secure: process.env.NODE_ENV === "production" ? true : false,
       });
+
+      const update = await user.update({ isLoggedIn: true });
+      if (!update) {
+        return new Error("Error updating user's login status. Pls retry.");
+      }
+
+      context.pubsub.publish("userLoggedIn", { userLoggedIn: true });
+
       return {
         userId: user.id,
         token: token,
@@ -107,6 +120,25 @@ module.exports = {
       };
     } catch (error) {
       console.error(error.message);
+    }
+  },
+
+  logout: async (root, { userId }, context) => {
+    authenticateUser(context);
+    try {
+      const user = await models.User.findOne({ where: { id: userId } });
+      if (!user) {
+        return new Error("User not found");
+      }
+      const update = await user.update({ isLoggedIn: false });
+      if (!update) {
+        return new Error("Error updating user's login status. Pls retry.");
+      }
+      context.pubsub.publish("userLoggedIn", { userLoggedIn: false });
+      return `${userId}`;
+    } catch (error) {
+      console.error(error.message);
+      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
     }
   },
   updateProfile: async (root, args, context) => {
@@ -120,6 +152,13 @@ module.exports = {
       });
       if (!user) {
         return new Error("user not found");
+      }
+
+      if (user.imagekit_fileId) {
+        imagekit.deleteFile(user.imagekit_fileId, function (error, result) {
+          if (error) console.log(error);
+          else console.log(result);
+        });
       }
       const updatedUser = await user.update(args);
       return updatedUser;
@@ -171,8 +210,11 @@ module.exports = {
         //delete the old image from imagekit
         if (tweet.imagekit_fileId) {
           imagekit.deleteFile(tweet.imagekit_fileId, function (error, result) {
-            if (error) console.log(error);
-            else console.log(result);
+            if (error) {
+              console.log(error);
+            } else {
+              console.log(result);
+            }
           });
         }
         const updatedTweet = await models.Tweet.update(
@@ -495,26 +537,6 @@ module.exports = {
 
       return new Error("Friend could not be unblocked. Please retry");
     } catch (error) {
-      console.log("error", error);
-      return `We couldn't process your request. Please retry.\n HINT: ${error}`;
-    }
-  },
-
-  deleteUser: async (root, { id }, context) => {
-    authenticateUser(context);
-    try {
-      const user = await models.User.findOne({ where: { id } });
-      if (!user) {
-        return new Error("User not found");
-      }
-      const destroy = await models.User.destroy({
-        where: { id },
-      });
-      if (destroy) {
-        return "User deleted";
-      }
-      return new Error("User could not be deleted. Please retry");
-    } catch (e) {
       console.log("error", error);
       return `We couldn't process your request. Please retry.\n HINT: ${error}`;
     }
