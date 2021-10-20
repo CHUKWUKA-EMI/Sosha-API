@@ -8,7 +8,7 @@ const freePath = (context) => {
     context.request.path.startsWith("/activate") ||
     context.request.path.startsWith("/imagekitAuth") ||
     context.request.path.startsWith("/regions") ||
-    context.request.path.startsWith("/user/password_reset")
+    context.request.path === "/user/password_reset"
   ) {
     return true;
   } else {
@@ -16,6 +16,7 @@ const freePath = (context) => {
   }
 };
 const authenticateUser = (context) => {
+  console.log("request", context.request);
   let token = context.request
     ? context.request.get("Authorization") ||
       context.request.body.variables.token

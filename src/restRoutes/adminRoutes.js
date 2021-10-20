@@ -1,8 +1,6 @@
 const { Router } = require("express");
 const models = require("../DB/database");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const { sendEmail } = require("../services/email");
+const restAuthMiddleware = require("../middleware/restAuthMiddleware");
 const ImageKit = require("imagekit");
 const { Op } = require("sequelize");
 require("dotenv").config();
@@ -15,8 +13,8 @@ const imagekit = new ImageKit({
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
 });
 
-route.get("/users", async (req, res) => {
-  console.log("user", req.user);
+route.get("/users", restAuthMiddleware, async (req, res) => {
+  const { page, limit } = req.query;
   if (req.user.user_role !== "admin") {
     return res
       .status(403)
@@ -24,22 +22,39 @@ route.get("/users", async (req, res) => {
   }
 
   try {
-    const users = await models.User.findAndCountAll();
-    return res.status(200).json({ users: users.rows, count: users.count });
+    const users = await models.User.findAndCountAll({
+      attributes: { exclude: ["password"] },
+      order: [["createdAt", "DESC"]],
+      limit: limit ? Number(limit) : 10,
+      offset: page ? Number(page) * Number(limit) : 0,
+    });
+
+    const totalUsers = users.count;
+    const totalPages = Math.ceil(Number(totalUsers) / Number(limit));
+    const currentPage = page ? Number(page) : 0;
+
+    return res.status(200).json({
+      users: users.rows,
+      totalUsers,
+      totalPages,
+      currentPage,
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
 
-route.get("/user/:id", async (req, res) => {
+route.get("/user/:id", restAuthMiddleware, async (req, res) => {
   if (req.user.user_role !== "admin") {
     return res
       .status(403)
       .json("You are not authorized to access this resource");
   }
   try {
-    const user = await models.User.findByPk(req.params.id);
+    const user = await models.User.findByPk(req.params.id, {
+      attributes: { exclude: ["password"] },
+    });
     return res.status(200).json(user);
   } catch (error) {
     console.log(error);
@@ -47,7 +62,7 @@ route.get("/user/:id", async (req, res) => {
   }
 });
 
-route.get("/tweets", async (req, res) => {
+route.get("/tweets", restAuthMiddleware, async (req, res) => {
   const { page, limit } = req.query;
   if (req.user.user_role !== "admin") {
     return res
@@ -66,12 +81,15 @@ route.get("/tweets", async (req, res) => {
         },
       ],
     });
+    const totalTweets = tweets.count;
+    const totalPages = Math.ceil(Number(totalTweets) / Number(limit));
+    const currentPage = page ? Number(page) : 0;
 
     return res.status(200).json({
       tweets: tweets.rows,
-      count: tweets.count,
-      page: page,
-      limit: limit,
+      totalTweets,
+      totalPages,
+      currentPage,
     });
   } catch (error) {
     console.log(error);
@@ -79,7 +97,7 @@ route.get("/tweets", async (req, res) => {
   }
 });
 
-route.delete("/tweet/:id", async (req, res) => {
+route.delete("/tweet/:id", restAuthMiddleware, async (req, res) => {
   const { id } = req.params;
   if (req.user.user_role !== "admin") {
     return res
@@ -115,7 +133,7 @@ route.delete("/tweet/:id", async (req, res) => {
   }
 });
 
-route.delete("/user/:id", async (req, res) => {
+route.delete("/user/:id", restAuthMiddleware, async (req, res) => {
   const { id } = req.params;
   if (req.user.user_role !== "admin") {
     return res
@@ -150,7 +168,7 @@ route.delete("/user/:id", async (req, res) => {
   }
 });
 
-route.put("/user/:id", async (req, res) => {
+route.put("/user/:id", restAuthMiddleware, async (req, res) => {
   if (req.user.user_role !== "admin") {
     return res
       .status(403)
@@ -174,7 +192,7 @@ route.put("/user/:id", async (req, res) => {
   }
 });
 
-route.delete("/users", async (req, res) => {
+route.delete("/users", restAuthMiddleware, async (req, res) => {
   const ids = req.body.ids;
   if (req.user.user_role !== "admin") {
     return res
@@ -221,7 +239,7 @@ route.delete("/users", async (req, res) => {
   }
 });
 
-route.delete("/tweets", async (req, res) => {
+route.delete("/tweets", restAuthMiddleware, async (req, res) => {
   const ids = req.body.ids;
   if (req.user.user_role !== "admin") {
     return res

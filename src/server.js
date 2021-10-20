@@ -61,7 +61,6 @@ Server.express.use(
 );
 
 Server.express.use(cookieParser());
-
 //Rest Endpoints
 Server.express.use("/regions", countriesRoutes);
 Server.express.use("/activate", utilRoutes);
