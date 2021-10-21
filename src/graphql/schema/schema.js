@@ -20,6 +20,7 @@ const typeDefs = `
        website:String
        sex:String
        username:String
+       user_role: String!
        isLoggedIn: Boolean!
      }
      
@@ -40,6 +41,7 @@ const typeDefs = `
        sex:String
        username:String
        isLoggedIn:Boolean!
+       user_role: String!
        friendship:Boolean!
        blocked: Boolean!
      }
@@ -65,6 +67,7 @@ const typeDefs = `
        sex:String
        username:String
        isLoggedIn:Boolean!
+       user_role: String!
        friendship:Boolean!
        requeststatus:String!
      }

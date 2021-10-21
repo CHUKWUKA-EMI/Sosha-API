@@ -16,7 +16,6 @@ const freePath = (context) => {
   }
 };
 const authenticateUser = (context) => {
-  console.log("request", context.request);
   let token = context.request
     ? context.request.get("Authorization") ||
       context.request.body.variables.token
