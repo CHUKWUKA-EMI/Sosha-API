@@ -168,7 +168,7 @@ module.exports = {
   },
   createTweet: async (
     root,
-    { content, imgUrl, userId, imagekit_fileId },
+    { content, imgUrl, userId, imagekit_fileId, videoUrl },
     context
   ) => {
     const userData = authenticateUser(context);
@@ -180,12 +180,14 @@ module.exports = {
         content: content,
         imgUrl,
         imagekit_fileId,
+        videoUrl,
       });
       const responseBody = {
         id: tweet.id,
         content: tweet.content,
         imgUrl: tweet.imgUrl,
         imagekit_fileId: tweet.imagekit_fileId,
+        videoUrl: tweet.videoUrl,
         UserId: tweet.UserId,
         createdAt: tweet.createdAt,
         User: user,
@@ -200,7 +202,7 @@ module.exports = {
 
   updateTweet: async (
     root,
-    { id, content, imgUrl, imagekit_fileId },
+    { id, content, imgUrl, imagekit_fileId, videoUrl },
     context
   ) => {
     authenticateUser(context);
@@ -222,6 +224,7 @@ module.exports = {
             content: content,
             imgUrl,
             imagekit_fileId,
+            videoUrl,
           },
           { where: { id: id } }
         );

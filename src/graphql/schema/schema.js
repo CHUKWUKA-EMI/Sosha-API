@@ -82,6 +82,7 @@ const typeDefs = `
          id: ID!
          content: String
          imgUrl:String
+         videoUrl:String
          imagekit_fileId:String
          User:User!
          Comments: [Comment!]
@@ -157,8 +158,8 @@ const typeDefs = `
        logout(userId:ID!):String!
        updateProfile(id:ID!,firstName:String,lastName:String, email: String, phone: String,imgUrl:String,imagekit_fileId:String, birthdate:Date,headline:String,bio:String,country:String,state:String,website:String,sex:String):User!
        resetPassword(password:String!):AuthData!
-       createTweet(content: String,imgUrl:String,userId:ID!,imagekit_fileId:String):  Tweet!
-       updateTweet(id: ID!, content: String,imgUrl:String,imagekit_fileId:String): Tweet!
+       createTweet(content: String,imgUrl:String,userId:ID!,imagekit_fileId:String,videoUrl:String):  Tweet!
+       updateTweet(id: ID!, content: String,imgUrl:String,imagekit_fileId:String,videoUrl:String): Tweet!
        deleteTweet(id:ID!):String!
        createComment(TweetId:ID!,comment: String):Comment!
        deleteComment(id:ID!):String!
