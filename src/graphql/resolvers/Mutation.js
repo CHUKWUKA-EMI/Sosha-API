@@ -111,7 +111,7 @@ module.exports = {
         return new Error("Error updating user's login status. Pls retry.");
       }
 
-      context.pubsub.publish("userLoggedIn", { userLoggedIn: true });
+      // context.pubsub.publish("userLoggedIn", { userLoggedIn: true });
 
       return {
         userId: user.id,
