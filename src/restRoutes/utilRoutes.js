@@ -1,9 +1,12 @@
-const { Router } = require("express");
+const { Router, json, urlencoded } = require("express");
 const jwt = require("jsonwebtoken");
 const models = require("../DB/database");
 require("dotenv").config();
 
 const router = Router();
+
+router.use(json());
+router.use(urlencoded({ extended: true }));
 
 router.get("/:token", async (req, res, next) => {
   const { token } = req.params;

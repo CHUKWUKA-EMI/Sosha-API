@@ -1,4 +1,4 @@
-const { Router } = require("express");
+const { Router, json, urlencoded } = require("express");
 const models = require("../DB/database");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
@@ -6,6 +6,9 @@ const { sendEmail } = require("../services/email");
 require("dotenv").config();
 
 const router = Router();
+
+router.use(json());
+router.use(urlencoded({ extended: true }));
 
 router.post("/password_reset", async (req, res) => {
   const { email } = req.body;
@@ -45,7 +48,6 @@ router.get("/password_reset/:token", async (req, res, next) => {
     if (id) {
       const user = await models.User.findOne({ where: { id } });
       if (user) {
-        await user.update({ activated: true });
         return res.redirect(`${process.env.FRONTEND_URL}/change_password`);
       }
       return res.send(`User with ID ${id} not found`);

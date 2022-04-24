@@ -1,8 +1,11 @@
-const { Router } = require("express");
+const { Router, json, urlencoded } = require("express");
 const { default: axios } = require("axios");
 const phoneUtil = require("google-libphonenumber").PhoneNumberUtil.getInstance();
 
 const router = Router();
+
+router.use(json());
+router.use(urlencoded({ extended: true }));
 
 router.get("/", async (_, res) => {
   const region_codes = phoneUtil.getSupportedRegions();

@@ -8,7 +8,8 @@ const freePath = (context) => {
     context.request.path.startsWith("/activate") ||
     context.request.path.startsWith("/imagekitAuth") ||
     context.request.path.startsWith("/regions") ||
-    context.request.path === "/user/password_reset"
+    context.request.path === "/user/password_reset" ||
+    context.request.path.startsWith("/stream")
   ) {
     return true;
   } else {

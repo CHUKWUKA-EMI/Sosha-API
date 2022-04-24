@@ -1,4 +1,4 @@
-const { Router } = require("express");
+const { Router, json, urlencoded } = require("express");
 const models = require("../DB/database");
 const restAuthMiddleware = require("../middleware/restAuthMiddleware");
 const ImageKit = require("imagekit");
@@ -6,6 +6,8 @@ const { Op } = require("sequelize");
 require("dotenv").config();
 
 const route = Router();
+route.use(json());
+route.use(urlencoded({ extended: true }));
 
 const imagekit = new ImageKit({
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
